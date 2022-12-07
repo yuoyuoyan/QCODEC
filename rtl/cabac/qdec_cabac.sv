@@ -14,6 +14,9 @@ module qdec_cabac(
     output logic       ctu_done_intr,
 
     // Decoded CTU syntax for later modules to read
+    input  logic [11:0] lb_raddr,
+    output logic [7:0]  lb_dout,
+    input  logic        lb_re
 );
 
 // decoded Bins from arith_dec to debin
@@ -37,6 +40,9 @@ logic        dec_rdy;
 logic [9:0]  ctx_addr;
 logic [7:0]  ctx_wdata,m ctx_rdata;
 logic        ctx_we, ctx_re;
+logic [11:0] lb_waddr;
+logic [7:0]  lb_din;
+logic        lb_we;
 
 // core fsm to control cabac decoder
 qdec_ctx_fsm ctx_fsm(
@@ -54,6 +60,11 @@ qdec_ctx_fsm ctx_fsm(
     .ctx_rdata,
     .ctx_we,
     .ctx_re,
+
+    // line buffer interface
+    .lb_waddr,
+    .lb_din,
+    .lb_we,
 
     // arith decoder interface, need to handle state R/W bypass
     .EPMode,
@@ -129,7 +140,7 @@ qdec_line_buffer line_buffer(
     .rst_n,
 
     // Send a pulse to switch ping-pong buffer when a CTU is complete
-    .lb_switch,
+    .lb_switch (ctu_done_intr),
     .lb_waddr,
     .lb_din,
     .lb_we,
