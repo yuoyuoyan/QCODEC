@@ -68,7 +68,6 @@ qdec_ctx_fsm ctx_fsm(
 // output: propability to arithmetic decoder
 qdec_ctx_mem ctx_mem(
     .clk,
-    .rst_n,
 
     // ctx memory interface
     .ctx_addr,
@@ -110,20 +109,6 @@ qdec_Arith_decoder Arith_decoder(
     .ruiBin_vld,
     .ruiBin_rdy,
     .ruiBin_bytealign
-);
-
-// de-binarization, take the decoded bin to real syntax elements
-// input:  bin from arithmetic decoder
-// output: bin index to fsm to update context state
-//         syntax elements to outside and line buffer
-qdec_debin debin(
-    .clk,
-    .rst_n,
-
-    // decoded Bins from arith_dec
-    .ruiBin,
-    .ruiBin_vld,
-    .ruiBin_rdy
 );
 
 // line buffer to store control info from outside, and the decoded syntax for outside to read
