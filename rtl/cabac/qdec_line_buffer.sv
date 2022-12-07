@@ -1,18 +1,17 @@
 // Author: Qi Wang
 // Line buffer module to store decoded syntax, and top-level parameter sets
-// Data format is fixed length 2192 bytes for a CTU, all aligned with bytes
+// Data format is fixed length 2200 bytes for a CTU, all aligned with bytes
 // Store in ping-pong buffer style, two CTUs in a row
 // For those signal separeted in matrix format, only record the left-up corner
 // e.x. split flag work until 8x8, so only record (64/8)^2=64 flags
 //
 // sao
 // sao_merge_left_flag, sao_merge_up_flag, sao_type_idx_luma, sao_type_idx_chroma 1
-// sao_offset_abs[4] 4
-// sao_offset_luma_sign[4] 1
+// sao_offset_luma[4] 4
+// sao_offset_cb[4] 4
+// sao_offset_cr[4] 4
 // sao_band_position_luma 1
-// sao_offset_cb_sign[4] 1
 // sao_band_position_cb 1
-// sao_offset_cr_sign[4] 1
 // sao_band_position_cr 1
 // sao_eo_class_luma, sao_eo_class_chroma 1
 // top

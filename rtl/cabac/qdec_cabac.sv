@@ -3,6 +3,10 @@ module qdec_cabac(
     input clk,
     input rst_n,
 
+    // control register interface
+    input  t_reg_req_s      reg_req, 
+    output t_reg_resp_s     reg_resp,
+
     // bitstream fetching interface to RAM from outside
     input  logic [7:0]  bitstreamFetch,
     input  logic        bitstreamFetch_vld,
@@ -19,6 +23,7 @@ module qdec_cabac(
     input  logic        lb_re
 );
 
+t_CUTREE_AO_s  reg_allout;
 // decoded Bins from arith_dec to debin
 logic        ruiBin;
 logic        ruiBin_vld;
@@ -43,6 +48,18 @@ logic        ctx_we, ctx_re;
 logic [11:0] lb_waddr;
 logic [7:0]  lb_din;
 logic        lb_we;
+
+// control register
+qdec_cabac_register cabac_reg(
+    .clk,
+    .rst_n,
+    .cabac_start,
+
+    .reg_allout,
+
+    .reg_req,
+    .reg_resp
+);
 
 // core fsm to control cabac decoder
 qdec_ctx_fsm ctx_fsm(

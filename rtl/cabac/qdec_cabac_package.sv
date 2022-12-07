@@ -37,9 +37,9 @@ typedef enum logic [7:0]  {IDLE_RES, JUDGE_TRAFO_SKIP, TRANSFORM_SKIP_FLAG,
                            JUDGE_COEFF_ABS_REM, COEFF_ABS_LEVEL_REM, NXT_COEFF_ABS_REM, ITERATION_RES, ENDING_RES} t_state_res;
 
 // slice types
-localparam SLICE_TYPE_I = 0;
+localparam SLICE_TYPE_I = 2;
 localparam SLICE_TYPE_P = 1;
-localparam SLICE_TYPE_B = 2;
+localparam SLICE_TYPE_B = 0;
 
 // pred mode flag
 localparam PRED_MODE_FLAG_INTER = 0;
@@ -247,6 +247,143 @@ localparam logic [0: 23][9:0] CTXIDX_PALETTE_RUN_PREFIX        = { 10'd532, 10'd
 localparam logic [0:  2][9:0] CTXIDX_COPY_ABOVE_PALETTE_INDICES_FLAG = { 10'd556, 10'd557, 10'd558};
 localparam logic [0:  2][9:0] CTXIDX_COPY_ABOVE_INDICES_FOR_FINAL_RUN_FLAG = { 10'd559, 10'd560, 10'd561};
 localparam logic [0:  2][9:0] CTXIDX_PALETTE_TRANSPOSE_FLAG    = { 10'd562, 10'd563, 10'd564};
+
+// Data format inside Line buffer
+//
+// Data format is fixed length 2200 bytes for a CTU, all aligned with bytes
+// Store in ping-pong buffer style, two CTUs in a row
+// For those signal separeted in matrix format, only record the left-up corner
+// e.x. split flag work until 8x8, so only record (64/8)^2=64 flags
+// sao
+// sao_merge_left_flag, sao_merge_up_flag, sao_type_idx_luma, sao_type_idx_chroma 1
+// sao_offset_luma[4] 4
+// sao_offset_cb[4] 4
+// sao_offset_cr[4] 4
+// sao_band_position_luma 1
+// sao_band_position_cb 1
+// sao_band_position_cr 1
+// sao_eo_class_luma, sao_eo_class_chroma 1
+// top
+// end_of_slice_segment_flag 1
+// align_reserved 6
+// cqt
+// split_cu_flag_min8x8[64] 8
+// cu
+// cu_transquant_bypass_flag_min4x4[256] 32
+// cu_skip_flag_min4x4[256] 32
+// pred_mode_flag_min4x4[256] 32
+// part_mode_min8x8[64] 32
+// prev_intra_luma_pred_flag_min4x4[256] 32
+// mpm_idx_min4x4[256] 64
+// rem_intra_luma_pred_mode_min4x4[256] 256
+// intra_chroma_pred_mode_min4x4[64] 32
+// rqt_root_cbf_min4x4[256] 32
+// pu
+// merge_flag_min4x4[256] 32
+// merge_idx_min4x4[256] 64
+// inter_pred_idc_min4x4[256] 64
+// ref_idx_l0_min4x4[256] 64
+// ref_idx_l1_min4x4[256] 64
+// mvp_l0_flag_min4x4[256] 32
+// mvp_l1_flag_min4x4[256] 32
+// mvd
+// mvd_l0_min4x4[256] 256
+// mvd_l1_min4x4[256] 256
+// trafo
+// split_transform_flag_min8x8[64] 8
+// cbf_cb_min4x4[64] 8
+// cbf_cr_min4x4[64] 8
+// cbf_luma_min4x4[256] 32
+// dqp
+// qp_delta_min4x4[256] 256
+// cqp
+// chroma_qp_offset_min4x4[64] 16
+// res
+// transform_skip_flag_y_min4x4[256] 32
+// transform_skip_flag_cb_min4x4[64] 8
+// transform_skip_flag_cr_min4x4[64] 8
+// residual_y_min4x4[256] 256
+// residual_cb_min4x4[64] 64
+// residual_cr_min4x4[64] 64
+localparam logic [11:0] LB_START_ADDR_SAO   = 0;
+localparam logic [11:0] LB_START_ADDR_TOP   = 12;
+localparam logic [11:0] LB_START_ADDR_CQT   = 16;
+localparam logic [11:0] LB_START_ADDR_CU    = 24;
+localparam logic [11:0] LB_START_ADDR_PU    = 568;
+localparam logic [11:0] LB_START_ADDR_MVD   = 920;
+localparam logic [11:0] LB_START_ADDR_TRAFO = 1432;
+localparam logic [11:0] LB_START_ADDR_DQP   = 1488;
+localparam logic [11:0] LB_START_ADDR_CQP   = 1744;
+localparam logic [11:0] LB_START_ADDR_RES   = 1760;
+
+// control register from parameter sets
+typedef enum logic [31:0] {
+    ADDR_CABAC_VPS_0                          = 32'h000,
+    ADDR_CABAC_SPS_0                          = 32'h004,
+    ADDR_CABAC_SPS_1                          = 32'h008,
+    ADDR_CABAC_PPS_0                          = 32'h00c,
+    ADDR_CABAC_SLICE_HEADER_0                 = 32'h010,
+} t_CUTREE_ADDR_e;
+
+parameter [31:0] reg_CABAC_VPS_0_MASK                           = 32'h0000000f;
+parameter [31:0] reg_CABAC_SPS_0_MASK                           = 32'h0fffffff;
+parameter [31:0] reg_CABAC_SPS_1_MASK                           = 32'h07ffffff;
+parameter [31:0] reg_CABAC_PPS_0_MASK                           = 32'h0000ffff;
+parameter [31:0] reg_CABAC_SLICE_HEADER_0_MASK                  = 32'h0000ffff;
+
+typedef struct packed {
+    logic [27:0]   rsvd0;
+    logic [3:0]   vps_id;
+} t_reg_CABAC_VPS_0_s;
+
+typedef struct packed {
+    logic [3:0]    rsvd0;
+    logic [11:0]   widthByPix;
+    logic [11:0]   heightByPix;
+    logic [3:0]    sps_id;
+} t_reg_CABAC_SPS_0_s;
+
+typedef struct packed {
+    logic [4:0]    rsvd0;
+    logic [0:0]    PcmEnabledFlag;
+    logic [0:0]    SaoEnabledFlag;
+    logic [0:0]    ampEnabledFlag;
+    logic [3:0]    MaxTrafoDepthIntra;
+    logic [3:0]    MaxTrafoDepthInter;
+    logic [3:0]    log2DiffMaxMinTbSize;
+    logic [3:0]    log2MinTbSize;
+    logic [3:0]    log2DiffMaxMinLumaCbSize;
+    logic [3:0]    log2MinCbSize;
+} t_reg_CABAC_SPS_1_s;
+
+typedef struct packed {
+    logic [15:0]   rsvd0;
+    logic [3:0]    numRefL0;
+    logic [3:0]    numRefL1;
+    logic [0:0]    cuQpDeltaEnabledFlag;
+    logic [0:0]    transformSkipEnabledFlag;
+    logic [0:0]    cabacInitPresentFlag;
+    logic [0:0]    signDataHidingFlag;
+    logic [3:0]    pps_id;
+} t_reg_CABAC_PPS_0_s;
+
+typedef struct packed {
+    logic [15:0]   rsvd0;
+    logic [7:0]    slice_qp_delta;
+    logic [0:0]    rsvd1;
+    logic [2:0]    max_num_merge_cand;
+    logic [0:0]    slice_sao_luma_flag;
+    logic [0:0]    slice_sao_chroma_flag;
+    logic [1:0]    slice_type;
+} t_reg_CABAC_SLICE_HEADER_0_s;
+
+typedef struct packed {
+    t_reg_CABAC_VPS_0_s                                          reg_CABAC_VPS_0;
+    t_reg_CABAC_SPS_0_s                                          reg_CABAC_SPS_0;
+    t_reg_CABAC_SPS_1_s                                          reg_CABAC_SPS_1;
+    t_reg_CABAC_PPS_0_s                                          reg_CABAC_PPS_0;
+    t_reg_CABAC_SLICE_HEADER_0_s                                 reg_CABAC_SLICE_HEADER_0;
+} t_CABAC_AO_s;
 
 // Context init value
 localparam logic [0:566][7:0] CTX_INIT_VALUE = {
