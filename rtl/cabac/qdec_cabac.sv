@@ -7,6 +7,13 @@ module qdec_cabac(
     input  logic [7:0]  bitstreamFetch,
     input  logic        bitstreamFetch_vld,
     output logic        bitstreamFetch_rdy,
+
+    // feedback to top level
+    output logic       error_intr,
+    output logic       done_intr,
+    output logic       ctu_done_intr,
+
+    // Decoded CTU syntax for later modules to read
 );
 
 // decoded Bins from arith_dec to debin
@@ -35,6 +42,11 @@ logic        ctx_we, ctx_re;
 qdec_ctx_fsm ctx_fsm(
     .clk,
     .rst_n,
+
+    // feedback to top level
+    .error_intr,
+    .done_intr,
+    .ctu_done_intr,
 
     // ctx memory interface
     .ctx_addr,
@@ -114,7 +126,16 @@ qdec_Arith_decoder Arith_decoder(
 // line buffer to store control info from outside, and the decoded syntax for outside to read
 qdec_line_buffer line_buffer(
     .clk,
-    .rst_n
+    .rst_n,
+
+    // Send a pulse to switch ping-pong buffer when a CTU is complete
+    .lb_switch,
+    .lb_waddr,
+    .lb_din,
+    .lb_we,
+    .lb_raddr,
+    .lb_dout,
+    .lb_re
 );
 
 endmodule

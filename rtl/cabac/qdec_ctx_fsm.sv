@@ -21,6 +21,7 @@ module qdec_ctx_fsm import qdec_cabac_package::*;(
     // feedback to top level
     output logic       error_intr,
     output logic       done_intr,
+    output logic       ctu_done_intr,
 
     // ctx memory interface
     output logic [9:0] ctx_addr,
@@ -93,6 +94,7 @@ always_ff @(posedge clk)
 // interrupt output to top-level
 always_ff @(posedge clk) error_intr <= (state == ERROR_MAIN)  ? 1 : 0;
 always_ff @(posedge clk) done_intr  <= (state == ENDING_MAIN) ? 1 : 0;
+always_ff @(posedge clk) ctu_done_intr  <= cqt_done_intr;
 
 // Main FSM control signals
 always_ff @(posedge clk)
