@@ -29,7 +29,7 @@ logic        dec_rdy;
 // ctx state RAM interface between FSM and ctx_mem
 logic [9:0]  ctx_addr;
 logic [7:0]  ctx_wdata,m ctx_rdata;
-logic        ctx_we, ctx_en;
+logic        ctx_we, ctx_re;
 
 // core fsm to control cabac decoder
 qdec_ctx_fsm ctx_fsm(
@@ -41,7 +41,7 @@ qdec_ctx_fsm ctx_fsm(
     .ctx_wdata,
     .ctx_rdata,
     .ctx_we,
-    .ctx_en,
+    .ctx_re,
 
     // arith decoder interface, need to handle state R/W bypass
     .EPMode,
@@ -74,7 +74,7 @@ qdec_ctx_mem ctx_mem(
     .ctx_wdata,
     .ctx_rdata,
     .ctx_we,
-    .ctx_en,
+    .ctx_re,
 );
 
 // arithmetic decoder, decode bitstream basec on arithemetic model

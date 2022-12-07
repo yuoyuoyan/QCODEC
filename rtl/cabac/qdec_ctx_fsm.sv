@@ -27,7 +27,7 @@ module qdec_ctx_fsm import qdec_cabac_package::*;(
     output logic [7:0] ctx_wdata,
     input  logic [7:0] ctx_rdata,
     output logic       ctx_we,
-    output logic       ctx_en,
+    output logic       ctx_re,
 
     // arith decoder interface, need to handle state R/W bypass
     output logic       EPMode,
@@ -147,10 +147,10 @@ always_ff @(posedge clk)
 
 always_ff @(posedge clk)
     case(state)
-    CTX_INIT_MAIN: ctx_en <= ctx_init_we;
-    SAO_MAIN:      ctx_en <= 1;
-    CQT_MAIN:      ctx_en <= 1;
-    default:       ctx_en <= 0;
+    CTX_INIT_MAIN: ctx_re <= 0;
+    SAO_MAIN:      ctx_re <= 1;
+    CQT_MAIN:      ctx_re <= 1;
+    default:       ctx_re <= 0;
     endcase
 
 // Other output signal control
