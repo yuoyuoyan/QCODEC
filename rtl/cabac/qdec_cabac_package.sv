@@ -318,13 +318,15 @@ localparam logic [11:0] LB_START_ADDR_RES   = 1760;
 
 // control register from parameter sets
 typedef enum logic [31:0] {
-    ADDR_CABAC_VPS_0                          = 32'h000,
-    ADDR_CABAC_SPS_0                          = 32'h004,
-    ADDR_CABAC_SPS_1                          = 32'h008,
-    ADDR_CABAC_PPS_0                          = 32'h00c,
-    ADDR_CABAC_SLICE_HEADER_0                 = 32'h010,
+    ADDR_CABAC_START                          = 32'h000,
+    ADDR_CABAC_VPS_0                          = 32'h004,
+    ADDR_CABAC_SPS_0                          = 32'h008,
+    ADDR_CABAC_SPS_1                          = 32'h00c,
+    ADDR_CABAC_PPS_0                          = 32'h010,
+    ADDR_CABAC_SLICE_HEADER_0                 = 32'h014,
 } t_CUTREE_ADDR_e;
 
+parameter [31:0] reg_CABAC_START_MASK                           = 32'h00000001;
 parameter [31:0] reg_CABAC_VPS_0_MASK                           = 32'h0000000f;
 parameter [31:0] reg_CABAC_SPS_0_MASK                           = 32'h0fffffff;
 parameter [31:0] reg_CABAC_SPS_1_MASK                           = 32'h07ffffff;
@@ -332,8 +334,13 @@ parameter [31:0] reg_CABAC_PPS_0_MASK                           = 32'h0000ffff;
 parameter [31:0] reg_CABAC_SLICE_HEADER_0_MASK                  = 32'h0000ffff;
 
 typedef struct packed {
+    logic [30:0]   rsvd0;
+    logic [0:0]    cabac_start;
+} t_reg_CABAC_START_s;
+
+typedef struct packed {
     logic [27:0]   rsvd0;
-    logic [3:0]   vps_id;
+    logic [3:0]    vps_id;
 } t_reg_CABAC_VPS_0_s;
 
 typedef struct packed {
@@ -378,6 +385,7 @@ typedef struct packed {
 } t_reg_CABAC_SLICE_HEADER_0_s;
 
 typedef struct packed {
+    t_reg_CABAC_START_s                                          reg_CABAC_START;
     t_reg_CABAC_VPS_0_s                                          reg_CABAC_VPS_0;
     t_reg_CABAC_SPS_0_s                                          reg_CABAC_SPS_0;
     t_reg_CABAC_SPS_1_s                                          reg_CABAC_SPS_1;

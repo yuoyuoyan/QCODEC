@@ -53,8 +53,8 @@ logic        lb_we;
 qdec_cabac_register cabac_reg(
     .clk,
     .rst_n,
-    .cabac_start,
 
+    .cabac_start,
     .reg_allout,
 
     .reg_req,
@@ -70,6 +70,9 @@ qdec_ctx_fsm ctx_fsm(
     .error_intr,
     .done_intr,
     .ctu_done_intr,
+
+    // control registers
+    .reg_allout,
 
     // ctx memory interface
     .ctx_addr,
