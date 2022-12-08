@@ -7,6 +7,7 @@ module qdec_ctx_fsm import qdec_cabac_package::*;(
     input rst_n,
 
     // control register from top-level
+    input  t_CUTREE_AO_s reg_all,
     input  logic       cabac_start_1frame,
     input  logic       cabac_init_ctx,
     input  logic       cabac_init_flag,

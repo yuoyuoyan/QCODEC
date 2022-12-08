@@ -330,7 +330,7 @@ parameter [31:0] reg_CABAC_START_MASK                           = 32'h00000001;
 parameter [31:0] reg_CABAC_VPS_0_MASK                           = 32'h0000000f;
 parameter [31:0] reg_CABAC_SPS_0_MASK                           = 32'h0fffffff;
 parameter [31:0] reg_CABAC_SPS_1_MASK                           = 32'h07ffffff;
-parameter [31:0] reg_CABAC_PPS_0_MASK                           = 32'h0000ffff;
+parameter [31:0] reg_CABAC_PPS_0_MASK                           = 32'h00ffffff;
 parameter [31:0] reg_CABAC_SLICE_HEADER_0_MASK                  = 32'h0000ffff;
 
 typedef struct packed {
@@ -364,7 +364,8 @@ typedef struct packed {
 } t_reg_CABAC_SPS_1_s;
 
 typedef struct packed {
-    logic [15:0]   rsvd0;
+    logic [7:0]    rsvd0;
+    logic [7:0]    initQp;
     logic [3:0]    numRefL0;
     logic [3:0]    numRefL1;
     logic [0:0]    cuQpDeltaEnabledFlag;
