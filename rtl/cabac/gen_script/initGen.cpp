@@ -132,12 +132,12 @@ int main(){
     }
 
     for(int i=0; i<567; i++) set_initValue.insert(CTX_INIT_VALUE[i]);
-    printf("Totally %d kinds of init value\n", set_initValue.size());
+    // printf("Totally %d kinds of init value\n", set_initValue.size());
     fprintf(fp_initValue, "CTX_INIT_VALUE_SET = {\n");
     int counter = 0;
     for(it=set_initValue.begin(); it!=set_initValue.end(); ++it){
         int initValue=*it;
-        fprintf(fp_initValue, "%*d, ", 3, initValue);
+        fprintf(fp_initValue, "8'd%*d, ", 3, initValue);
         if(counter%8==7) fprintf(fp_initValue, "\n");
         counter++;
     }
@@ -148,12 +148,12 @@ int main(){
         int counter = 0;
         for(it=set_initValue.begin(); it!=set_initValue.end(); ++it){
             int initValue=*it;
-            fprintf(fp_state, "%*d, ", 3, initState(qp, initValue));
+            fprintf(fp_state, "8'd%*d, ", 3, initState(qp, initValue));
             if(counter%8==7) fprintf(fp_state, "\n");
             counter++;
         }
         while(counter<64){
-            fprintf(fp_state, "  0, ");
+            fprintf(fp_state, "  8'd0, ");
             if(counter%8==7) fprintf(fp_state, "\n");
             counter++;
         }

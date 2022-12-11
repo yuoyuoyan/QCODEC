@@ -1,5 +1,5 @@
 //
-module qdec_cabac(
+module qdec_cabac import qdec_cabac_package::*; import axi_pkg::*; (
     input clk,
     input rst_n,
 

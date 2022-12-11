@@ -535,7 +535,7 @@ always_ff @(posedge clk)
                                                                                currPix_zigzag == 0 && currSB_zigzag == 0 ? CTXIDX_SIG_COEFF_FLAG[27] :
                                                                                CTXIDX_SIG_COEFF_FLAG[sigCtx_l1]);
     COEFF_ABS_LEVEL_GT1_FLAG:  ctx_res_addr <= CTXIDX_COEFF_ABS_LEVEL_GT1_FLAG[ctxInc_gt1];
-    COEFF_ABS_LEVEL_GT2_FLAG:  ctx_res_addr <= CTXIDX_COEFF_ABS_LEVEL_GT1_FLAG[ctxInc_gt2];
+    COEFF_ABS_LEVEL_GT2_FLAG:  ctx_res_addr <= CTXIDX_COEFF_ABS_LEVEL_GT2_FLAG[ctxInc_gt2];
     default:                   ctx_res_addr <= 0;
     endcase
 
