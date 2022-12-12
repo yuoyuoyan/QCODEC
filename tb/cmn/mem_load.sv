@@ -4,7 +4,7 @@ task mem_load(
     input logic clk
 );
 
-integer fp, count;
+integer fp, temp;
 logic [8*256-1:0]str;
 logic [27:0]     bitstream_addr;
 logic [8*16-1:0] bitstream_buf;
@@ -21,8 +21,8 @@ localparam FRAME_END = 5;
 fp = $fopen("../../database/bitstream.txt", "r");
 
 counter = 0;
-do{
-    count = $fscanf(fp, "%x: %x %x %x %x %x %x %x %x  %s", bitstream_addr, 
+do begin
+    temp = $fscanf(fp, "%x: %x %x %x %x %x %x %x %x  %s", bitstream_addr, 
                     bitstream_buf[8*16-1:7*16], bitstream_buf[7*16-1:6*16], bitstream_buf[6*16-1:5*16], bitstream_buf[5*16-1:4*16],
                     bitstream_buf[4*16-1:3*16], bitstream_buf[3*16-1:2*16], bitstream_buf[2*16-1:1*16], bitstream_buf[1*16-1:0*16], str);
     $display("read data %032x\n", bitstream_buf);
@@ -37,14 +37,14 @@ do{
         FRAME_END: state = FRAME_END;
         default: state = HEAD0;
         endcase
-        $root.bitstream_fifo.buffer[counter] = bitstream_buf_top[15:8];
-        $root.bitstream_fifo.buffer[counter+1] = bitstream_buf_top[7:0];
+        $root.tb_cabac.bitstream_fifo.buffer[counter] = bitstream_buf_top[15:8];
+        $root.tb_cabac.bitstream_fifo.buffer[counter+1] = bitstream_buf_top[7:0];
         counter = counter+2;
         bitstream_buf = {bitstream_buf[7*16-1:0], 16'h0};
     end
-} while(state != FRAME_END)
+end while(state != FRAME_END);
 
-$root.bitstream_fifo.wpt = counter;
+$root.tb_cabac.bitstream_fifo.wpt = counter;
 
 $fclose(fp);
 

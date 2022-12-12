@@ -5,6 +5,11 @@ module tb_cabac;
 `include "mem_load.sv"
 `include "reg_rw.sv"
 
+`ifndef IVERILOG
+import axi_pkg::*;
+import qdec_cabac_package::*;
+`endif
+
 logic clk, rst_n;
 t_reg_req_s      reg_req;
 t_reg_resp_s     reg_resp;

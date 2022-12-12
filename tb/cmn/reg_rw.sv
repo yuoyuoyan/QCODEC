@@ -1,12 +1,14 @@
 // Arthor: Qi Wang
 // Tasks to write a 32-bit data into a certain address
-task reg_write(
-    input  logic         clk,
-    output t_reg_req_s   reg_req,
-    input  t_reg_resp_s  reg_resp,
-    input  logic [31:0]  waddr,
-    input  logic [31:0]  wdata
-);
+task reg_write;
+`ifndef IVERILOG
+import axi_pkg::*;
+`endif
+input  logic         clk;
+output t_reg_req_s   reg_req;
+input  t_reg_resp_s  reg_resp;
+input  logic [31:0]  waddr;
+input  logic [31:0]  wdata;
 
 @(negedge clk);
 reg_req.AWVALID = 1;
@@ -21,13 +23,15 @@ reg_req.WVALID = 0;
 
 endtask
 
-task reg_read(
-    input  logic         clk,
-    output t_reg_req_s   reg_req,
-    input  t_reg_resp_s  reg_resp,
-    input  logic [31:0]  raddr,
-    output logic [31:0]  rdata
-);
+task reg_read;
+`ifndef IVERILOG
+import axi_pkg::*;
+`endif
+input  logic         clk;
+output t_reg_req_s   reg_req;
+input  t_reg_resp_s  reg_resp;
+input  logic [31:0]  raddr;
+output logic [31:0]  rdata;
 
 @(negedge clk);
 reg_req.ARVALID = 1;

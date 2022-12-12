@@ -64,7 +64,7 @@ always_comb
     endcase
 
 always_ff @(posedge clk)
-    if(!rst_n) state <= IDLE_CU;
+    if(!rst_n) state <= IDLE_PU;
     else state <= nxt_state;
 
 // interrupt output to top-level
