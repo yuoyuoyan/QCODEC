@@ -1,7 +1,11 @@
 // 
 // Author : Qi Wang
 // The sub-FSM to handle TU part decoding
-module qdec_tu_fsm import qdec_cabac_package::*;(
+module qdec_tu_fsm 
+`ifndef IVERILOG
+import qdec_cabac_package::*;
+`endif
+(
     input clk,
     input rst_n,
 
@@ -49,7 +53,8 @@ always_comb
     CHROMA_QP_OFFSET:          nxt_state = chroma_qp_offset_done_intr ? (cbf_luma ? RES_CODING_LUMA : JUDGE_RES_CHROMA) : CHROMA_QP_OFFSET;
     RES_CODING_LUMA:           nxt_state = res_done_intr ? JUDGE_RES_CHROMA : RES_CODING_LUMA;
     JUDGE_RES_CHROMA:          nxt_state = (log2TrafoSize > 2) ? (cbf_cb ? RES_CODING_CB : (cbf_cr ? RES_CODING_CR : ENDING_TU)) :
-                                                                 (blkIdx == 3 ? (parent_cbf_cb ? RES_CODING_PARENT_CB : (parent_cbf_cr ? RES_CODING_PARENT_CR : ENDING_TU)));
+                                                                 (blkIdx == 3 ? (parent_cbf_cb ? RES_CODING_PARENT_CB : (parent_cbf_cr ? RES_CODING_PARENT_CR : ENDING_TU)) :
+                                                                 ENDING_TU);
     RES_CODING_CB:             nxt_state = res_done_intr ? (cbf_cr ? RES_CODING_CR : ENDING_TU) : RES_CODING_CB;
     RES_CODING_CR:             nxt_state = res_done_intr ? ENDING_TU : RES_CODING_CR;
     RES_CODING_PARENT_CB:      nxt_state = res_done_intr ? (parent_cbf_cr ? RES_CODING_PARENT_CR : ENDING_TU) : RES_CODING_PARENT_CB;

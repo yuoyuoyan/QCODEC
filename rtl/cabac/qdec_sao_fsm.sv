@@ -1,7 +1,11 @@
 //
 // Author : Qi Wang
 // The sub-FSM to handle SAO part decoding
-module qdec_sao_fsm import qdec_cabac_package::*;(
+module qdec_sao_fsm 
+`ifndef IVERILOG
+import qdec_cabac_package::*;
+`endif
+(
     input clk,
     input rst_n,
 
@@ -60,8 +64,7 @@ always_comb
     SAO_LUMA_OFFSET_ABS_4:    nxt_state = dec_done ? (sao_type_luma == 1 ? SAO_LUMA_OFFSET_SIGN_4 : SAO_EO_CLASS_LUMA) :
                                           SAO_LUMA_OFFSET_ABS_4;
     SAO_LUMA_OFFSET_SIGN_4:   nxt_state = dec_done ? SAO_LUMA_BAND_POS : SAO_LUMA_OFFSET_SIGN_4;
-    SAO_LUMA_BAND_POS:        nxt_state = dec_done ? SAO_LUMA_BAND_POS : 
-                                          (slice_sao_chroma_flag ? SAO_TYPE_IDX_CHROMA : ENDING_SAO) :
+    SAO_LUMA_BAND_POS:        nxt_state = dec_done ? (slice_sao_chroma_flag ? SAO_TYPE_IDX_CHROMA : ENDING_SAO) :
                                           SAO_LUMA_BAND_POS;
     SAO_EO_CLASS_LUMA:        nxt_state = dec_done ? (slice_sao_chroma_flag ? SAO_TYPE_IDX_CHROMA : ENDING_SAO) : 
                                           SAO_EO_CLASS_LUMA;

@@ -1,7 +1,11 @@
 // 
 // Author : Qi Wang
 // The sub-FSM to handle PU part decoding
-module qdec_pu_fsm import qdec_cabac_package::*;(
+module qdec_pu_fsm 
+`ifndef IVERILOG
+import qdec_cabac_package::*;
+`endif
+(
     input clk,
     input rst_n,
 
@@ -67,7 +71,7 @@ always_ff @(posedge clk)
 always_ff @(posedge clk) pu_done_intr <= (state == ENDING_PU) ? 1 : 0;
 
 // Main FSM control signals
-always_ff @(posedge clk) counter_coded_bin <= (state == IDLE_PU || dec_done) 0 : (ruiBin_vld ? counter_coded_bin + 1 : counter_coded_bin); // record the decoded bin at current state
+always_ff @(posedge clk) counter_coded_bin <= (state == IDLE_PU || dec_done) ? 0 : (ruiBin_vld ? counter_coded_bin + 1 : counter_coded_bin); // record the decoded bin at current state
 always_ff @(posedge clk) ruiBin_delay <= ruiBin_vld ? {ruiBin_delay[6:0], ruiBin} : ruiBin_delay; // store the decoded bins
 always_ff @(posedge clk)
     case(state)

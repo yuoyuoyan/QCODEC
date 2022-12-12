@@ -1,7 +1,11 @@
 // 
 // Author : Qi Wang
 // The sub-FSM to handle MVD part decoding
-module qdec_mvd_fsm import qdec_cabac_package::*;(
+module qdec_mvd_fsm 
+`ifndef IVERILOG
+import qdec_cabac_package::*;
+`endif
+(
     input clk,
     input rst_n,
 
@@ -60,7 +64,7 @@ always_ff @(posedge clk) mvd_done_intr <= (state == ENDING_MVD) ? 1 : 0;
 logic first_zero_in_bins, first_zero_in_bins_d;
 always_ff @(posedge clk) first_zero_in_bins <= dec_done ? 0 : (ruiBin_vld & !ruiBin & (state == ABS_MVD_MINUS2_0 || state == ABS_MVD_MINUS2_1) ? 1 : first_zero_in_bins);
 always_ff @(posedge clk) first_zero_in_bins_d <= first_zero_in_bins;
-always_ff @(posedge clk) counter_coded_bin <= (state == IDLE_MVD || dec_done) 0 : (ruiBin_vld ? counter_coded_bin + 1 : counter_coded_bin); // record the decoded bin at current state
+always_ff @(posedge clk) counter_coded_bin <= (state == IDLE_MVD || dec_done) ? 0 : (ruiBin_vld ? counter_coded_bin + 1 : counter_coded_bin); // record the decoded bin at current state
 always_ff @(posedge clk) ruiBin_delay <= ruiBin_vld ? {ruiBin_delay[30:0], ruiBin} : ruiBin_delay; // store the decoded bins
 always_ff @(posedge clk)
     case(state)
@@ -74,14 +78,14 @@ always_ff @(posedge clk)
 always_ff @(posedge clk)
     case(state)
     IDLE_MVD:                  dec_done <= 0;
-    ABS_MVD_GREATER0_FLAG0:    dec_done <= (counter_coded_bin == 1) ? 1 : 0;;
-    ABS_MVD_GREATER0_FLAG1:    dec_done <= (counter_coded_bin == 1) ? 1 : 0;;                   
-    ABS_MVD_GREATER1_FLAG0:    dec_done <= (counter_coded_bin == 1) ? 1 : 0;;
-    ABS_MVD_GREATER1_FLAG1:    dec_done <= (counter_coded_bin == 1) ? 1 : 0;;
-    ABS_MVD_MINUS2_0:          dec_done <= (counter_coded_bin == target_bin) ? 1 : 0;;
-    MVD_SIGN_FLAG0:            dec_done <= (counter_coded_bin == 1) ? 1 : 0;;
-    ABS_MVD_MINUS2_1:          dec_done <= (counter_coded_bin == target_bin) ? 1 : 0;;
-    MVD_SIGN_FLAG1:            dec_done <= (counter_coded_bin == 1) ? 1 : 0;;
+    ABS_MVD_GREATER0_FLAG0:    dec_done <= (counter_coded_bin == 1) ? 1 : 0;
+    ABS_MVD_GREATER0_FLAG1:    dec_done <= (counter_coded_bin == 1) ? 1 : 0;
+    ABS_MVD_GREATER1_FLAG0:    dec_done <= (counter_coded_bin == 1) ? 1 : 0;
+    ABS_MVD_GREATER1_FLAG1:    dec_done <= (counter_coded_bin == 1) ? 1 : 0;
+    ABS_MVD_MINUS2_0:          dec_done <= (counter_coded_bin == target_bin) ? 1 : 0;
+    MVD_SIGN_FLAG0:            dec_done <= (counter_coded_bin == 1) ? 1 : 0;
+    ABS_MVD_MINUS2_1:          dec_done <= (counter_coded_bin == target_bin) ? 1 : 0;
+    MVD_SIGN_FLAG1:            dec_done <= (counter_coded_bin == 1) ? 1 : 0;
     default:                   dec_done <= 0;
     endcase
 

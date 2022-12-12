@@ -3,7 +3,11 @@
 // Description: For normal mode, takes 4 cycles to have updated state and one decoded bin
 //              For bypass mode, takes 1 cycle to have one decoded bin, no updated state
 //              To initialize it, wait for dec_rdy to fetch some data, and send a arithInit pulse
-module qdec_Arith_decoder import qdec_cabac_package::*; (
+module qdec_Arith_decoder 
+`ifndef IVERILOG
+import qdec_cabac_package::*; 
+`endif
+(
     input clk,
     input rst_n,
 
@@ -140,7 +144,7 @@ always_ff @(posedge clk)
         default : uiRange_lps <= {uiLPS[7:0], 1'h0};
         endcase
     else uiRange_lps <= uiRange_lps;
-always_ff @(posedge clk) uiRange_mps <= (phase_control == 2'b10) ? scaledRange[14:6];
+always_ff @(posedge clk) uiRange_mps <= (phase_control == 2'b10) ? scaledRange[14:6] : uiRange_mps;
 
 // L3, calculate uiValue, uiRange, bitsNeeded, ruiBin, ruiBin_vld, ctxStateUpdate, ctxStateUpdate_vld, byteDecodeComplete
 // Noted that uiRange, uiValue and bitsNeeded need to be initialized based on control

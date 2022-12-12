@@ -19,6 +19,8 @@ logic        lb_re;
 
 
 initial begin
+    $dumpfile("cabac_waveform.vcd");
+    $dumpvars(0, cabac);
     clk = 1'b0;
     rst_n = 1'b1;
     
@@ -27,6 +29,8 @@ initial begin
     rst_n = 1'b0;
     #1000
     rst_n = 1'b1;
+    #10000
+    $finish();
 end
 
 // Generate 100MHz clock signal

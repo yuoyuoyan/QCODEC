@@ -1,7 +1,11 @@
 //
 // Author : Qi Wang
 // The sub-FSM to handle CQT part decoding
-module qdec_sao_fsm import qdec_cabac_package::*;(
+module qdec_cqt_fsm 
+`ifndef IVERILOG
+import qdec_cabac_package::*;
+`endif
+(
     input clk,
     input rst_n,
 

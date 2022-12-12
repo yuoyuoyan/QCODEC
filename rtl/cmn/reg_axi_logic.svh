@@ -13,7 +13,7 @@ localparam		WRIDLE	= 2'd0,
 				RDIDLE	= 2'd0, 
 				RDDATA	= 2'd1, 
 				RDRESET	= 2'd2, 
-				ADDR_BITS	= axi_pkg::R_AWID;
+				ADDR_BITS	= R_AWID;
 
 
 //------------------------Local signal-------------------

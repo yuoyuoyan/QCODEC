@@ -1,7 +1,11 @@
 // 
 // Author : Qi Wang
 // The sub-FSM to handle Chroma QP offset part decoding
-module qdec_cqp_fsm import qdec_cabac_package::*;(
+module qdec_cqp_fsm 
+`ifndef IVERILOG
+import qdec_cabac_package::*;
+`endif
+(
     input clk,
     input rst_n,
 
@@ -49,7 +53,7 @@ always_ff @(posedge clk)
 always_ff @(posedge clk) cqp_done_intr <= (state == ENDING_CQP) ? 1 : 0;
 
 // Main FSM control signals
-always_ff @(posedge clk) counter_coded_bin <= (state == IDLE_CU || dec_done) 0 : (ruiBin_vld ? counter_coded_bin + 1 : counter_coded_bin); // record the decoded bin at current state
+always_ff @(posedge clk) counter_coded_bin <= (state == IDLE_CU || dec_done) ? 0 : (ruiBin_vld ? counter_coded_bin + 1 : counter_coded_bin); // record the decoded bin at current state
 always_ff @(posedge clk) ruiBin_delay <= ruiBin_vld ? {ruiBin_delay[6:0], ruiBin} : ruiBin_delay; // store the decoded bins
 
 always_ff @(posedge clk) 
@@ -60,7 +64,7 @@ always_ff @(posedge clk)
 
 always_ff @(posedge clk)
     if(state == CU_CHROMA_QP_OFFSET_IDX)
-        target_bin <= (counter_coded_bin < 5 & ruiBin_vld & ruiBin) target_bin + 1 : target_bin;
+        target_bin <= (counter_coded_bin < 5 & ruiBin_vld & ruiBin) ? target_bin + 1 : target_bin;
     else target_bin <= 1;
 
 always_ff @(posedge clk)

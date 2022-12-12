@@ -148,12 +148,12 @@ int main(){
         int counter = 0;
         for(it=set_initValue.begin(); it!=set_initValue.end(); ++it){
             int initValue=*it;
-            fprintf(fp_state, "8'd%*d, ", 3, initState(qp, initValue));
+            fprintf(fp_state, "7'd%*d, ", 3, initState(qp, initValue));
             if(counter%8==7) fprintf(fp_state, "\n");
             counter++;
         }
         while(counter<64){
-            fprintf(fp_state, "  8'd0, ");
+            fprintf(fp_state, "7'd  0, ");
             if(counter%8==7) fprintf(fp_state, "\n");
             counter++;
         }

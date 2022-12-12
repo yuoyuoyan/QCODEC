@@ -1,6 +1,11 @@
 // Author: Qi Wang
 // Control register module for top-level to interact
-module qdec_cabac_register import axi_pkg::*;(
+
+module qdec_cabac_register 
+`ifndef IVERILOG
+import axi_pkg::*;
+`endif
+(
     input clk,
     input rst_n,
 
@@ -48,7 +53,7 @@ endcase
 
 
 always_comb begin 
-case(reg_addr_rd) inside
+case(reg_addr_rd)
     ADDR_CABAC_START                                : pre_rdata = reg_CABAC_START;
     ADDR_CABAC_VPS_0                                : pre_rdata = reg_CABAC_VPS_0;
     ADDR_CABAC_SPS_0                                : pre_rdata = reg_CABAC_SPS_0;

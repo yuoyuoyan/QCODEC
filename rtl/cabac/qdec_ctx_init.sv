@@ -1,6 +1,10 @@
 // Author : Qi Wang
 // The sub-FSM to handle context model initialization
-module qdec_ctx_init import qdec_cabac_package::*;(
+module qdec_ctx_init 
+`ifndef IVERILOG
+import qdec_cabac_package::*;
+`endif
+(
     input clk,
     input rst_n,
 

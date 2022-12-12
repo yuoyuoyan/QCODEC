@@ -1,5 +1,11 @@
-//
-module qdec_cabac import qdec_cabac_package::*; import axi_pkg::*; (
+// Author: Qi Wang
+// Top level of CABAC
+
+module qdec_cabac 
+`ifndef IVERILOG
+import qdec_cabac_package::*; import axi_pkg::*; 
+`endif
+(
     input clk,
     input rst_n,
 
@@ -23,7 +29,7 @@ module qdec_cabac import qdec_cabac_package::*; import axi_pkg::*; (
     input  logic        lb_re
 );
 
-t_CUTREE_AO_s  reg_allout;
+t_CABAC_AO_s  reg_allout;
 // decoded Bins from arith_dec to debin
 logic        ruiBin;
 logic        ruiBin_vld;
@@ -43,7 +49,7 @@ logic        dec_run;
 logic        dec_rdy;
 // ctx state RAM interface between FSM and ctx_mem
 logic [9:0]  ctx_addr;
-logic [7:0]  ctx_wdata,m ctx_rdata;
+logic [7:0]  ctx_wdata, ctx_rdata;
 logic        ctx_we, ctx_re;
 logic [11:0] lb_waddr;
 logic [7:0]  lb_din;
@@ -117,7 +123,7 @@ qdec_ctx_mem ctx_mem(
     .ctx_wdata,
     .ctx_rdata,
     .ctx_we,
-    .ctx_re,
+    .ctx_re
 );
 
 // arithmetic decoder, decode bitstream basec on arithemetic model

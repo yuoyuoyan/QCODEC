@@ -9,7 +9,7 @@ module qdec_ctx_mem(
     input  logic [7:0] ctx_wdata,
     input  logic [7:0] ctx_rdata,
     input  logic       ctx_we,
-    input  logic       ctx_re,
+    input  logic       ctx_re
 );
 
 basic_ram #(

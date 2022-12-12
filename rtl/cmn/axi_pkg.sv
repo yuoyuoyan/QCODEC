@@ -1,8 +1,23 @@
+`ifndef IVERILOG
 package axi_pkg;
+`endif
 
+parameter	D_DWID	= 256;
+parameter	D_AWID	= 64;
+parameter	C_DWID	= 32;
+parameter	C_AWID	= 32;
 parameter	R_AWID	= 32;
 parameter	R_DWID	= 32;
+
+parameter	WID_USER	= 8;
 parameter	WID_TID		= 8;
+
+typedef enum logic [1:0] { 
+	AXI_OKAY_RESP, 
+	AXI_EXOKAY_RESP, 
+	AXI_SLVERR_RESP, 
+	AXI_DECERR_RESP
+} t_AXI_RESP_e;
 
 typedef struct packed { 
 	logic	[R_AWID-1:0]	AWADDR;
@@ -52,4 +67,6 @@ typedef struct packed {
 	logic				RVALID;
 } t_reg_resp_s;
 
+`ifndef IVERILOG
 endpackage
+`endif

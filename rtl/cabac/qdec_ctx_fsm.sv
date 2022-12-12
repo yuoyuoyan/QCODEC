@@ -2,12 +2,16 @@
 // Note that Tiles, subset, palette mode, tu_residual_act are not used
 // Fix the ChromaArrayType to 420 for now
 // Max supporting frame size is 4096x2048, which has 64x32 CTUs
-module qdec_ctx_fsm import qdec_cabac_package::*;(
+module qdec_ctx_fsm 
+`ifndef IVERILOG
+import qdec_cabac_package::*;
+`endif
+(
     input clk,
     input rst_n,
 
     // control register from top-level
-    input  t_CUTREE_AO_s reg_all,
+    input  t_CABAC_AO_s reg_all,
     input  logic       cabac_start_1frame,
     input  logic       cabac_init_ctx,
     input  logic       cabac_init_flag,

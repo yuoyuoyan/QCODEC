@@ -1,7 +1,11 @@
 // 
 // Author : Qi Wang
 // The sub-FSM to handle residuel part decoding
-module qdec_res_fsm import qdec_cabac_package::*;(
+module qdec_res_fsm 
+`ifndef IVERILOG
+import qdec_cabac_package::*;
+`endif
+(
     input clk,
     input rst_n,
 
@@ -102,7 +106,7 @@ always_comb
     SIG_COEFF_FLAG:            nxt_state = dec_done ? NXT_SIG_COEFF_FLAG : SIG_COEFF_FLAG;
     NXT_SIG_COEFF_FLAG:        nxt_state = currPix_scan==0 ? JUDGE_COEFF_ABS_GT1_FLAG : JUDGE_SIG_COEFF_FLAG;
     JUDGE_COEFF_ABS_GT1_FLAG:  nxt_state = (curr_sig_coeff_flag && (numGt1Flag < 8)) ? COEFF_ABS_LEVEL_GT1_FLAG : NXT_COEFF_ABS_GT1_FLAG;
-    COEFF_ABS_LEVEL_GT1_FLAG:  nxt_state = dec_done ? NXT_COEFF_ABS_GT1_FLAG : COEFF_ABS_LEVEL_GT1_FLAG
+    COEFF_ABS_LEVEL_GT1_FLAG:  nxt_state = dec_done ? NXT_COEFF_ABS_GT1_FLAG : COEFF_ABS_LEVEL_GT1_FLAG;
     NXT_COEFF_ABS_GT1_FLAG:    nxt_state = currPix_scan==0 ? SIGN_HIDDEN : JUDGE_COEFF_ABS_GT1_FLAG;
     SIGN_HIDDEN:               nxt_state = JUDGE_COEFF_ABS_GT2_FLAG;
     JUDGE_COEFF_ABS_GT2_FLAG:  nxt_state = (lastGt1ScanPos != 5'h1F) ? COEFF_ABS_LEVEL_GT2_FLAG : JUDGE_COEFF_SIGN_FLAG;
@@ -129,7 +133,7 @@ always_ff @(posedge clk)
 always_ff @(posedge clk) res_done_intr <= (state == ENDING_RES) ? 1 : 0;
 
 // Main FSM control signals
-always_ff @(posedge clk) counter_coded_bin <= (state == IDLE_CU || dec_done) 0 : (ruiBin_vld ? counter_coded_bin + 1 : counter_coded_bin); // record the decoded bin at current state
+always_ff @(posedge clk) counter_coded_bin <= (state == IDLE_CU || dec_done) ? 0 : (ruiBin_vld ? counter_coded_bin + 1 : counter_coded_bin); // record the decoded bin at current state
 always_ff @(posedge clk) ruiBin_delay <= ruiBin_vld ? {ruiBin_delay[30:0], ruiBin} : ruiBin_delay; // store the decoded bins
 
 always_ff @(posedge clk) transform_skip_flag <= (state == TRANSFORM_SKIP_FLAG && dec_done) ? ruiBin_delay[0] : transform_skip_flag;
@@ -371,22 +375,22 @@ always_ff @(posedge clk)
     else if(state == LAST_SIG_COEFF_X_SUFFIX)
     // UInt uiCount = ( uiPosLastX - 2 ) >> 1;
         case(last_sig_coeff_x_prefix)
-        3'h4: target_bin <= 1;
-        3'h5: target_bin <= 1;
-        3'h6: target_bin <= 2;
-        3'h7: target_bin <= 2;
-        3'h8: target_bin <= 3;
-        3'h9: target_bin <= 3;
+        4'h4: target_bin <= 1;
+        4'h5: target_bin <= 1;
+        4'h6: target_bin <= 2;
+        4'h7: target_bin <= 2;
+        4'h8: target_bin <= 3;
+        4'h9: target_bin <= 3;
         endcase
     else if(state == LAST_SIG_COEFF_Y_SUFFIX)
     // UInt uiCount = ( uiPosLastX - 2 ) >> 1;
         case(last_sig_coeff_y_prefix)
-        3'h4: target_bin <= 1;
-        3'h5: target_bin <= 1;
-        3'h6: target_bin <= 2;
-        3'h7: target_bin <= 2;
-        3'h8: target_bin <= 3;
-        3'h9: target_bin <= 3;
+        4'h4: target_bin <= 1;
+        4'h5: target_bin <= 1;
+        4'h6: target_bin <= 2;
+        4'h7: target_bin <= 2;
+        4'h8: target_bin <= 3;
+        4'h9: target_bin <= 3;
         endcase
     else if(state == COEFF_ABS_LEVEL_REM)
         case({coeff_abs_level_remaining_prefix, uiGoRiceParam})
