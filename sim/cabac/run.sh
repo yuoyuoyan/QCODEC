@@ -1,6 +1,7 @@
 rm cabac_waveform.vcd
 iverilog -o cabac.vvp -g2012 -DIVERILOG \
 -I ../../rtl/cmn \
+-I ../../tb/cmn \
 ../../rtl/cmn/axi_pkg.sv \
 ../../rtl/cmn/basic_ram.sv \
 ../../rtl/cmn/basic_fifo.sv \

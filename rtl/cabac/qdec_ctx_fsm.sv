@@ -13,15 +13,6 @@ import qdec_cabac_package::*;
     // control register from top-level
     input  logic       cabac_start,
     input  t_CABAC_AO_s reg_allout,
-    input  logic       cabac_init_ctx,
-    input  logic       cabac_init_flag,
-    input  logic       slice_sao_luma_flag,
-    input  logic       slice_sao_chroma_flag,
-    input  logic       transquant_bypass_enabled_flag,
-    input  logic [1:0] slice_type,
-    input  logic [5:0] qp,
-    input  logic [11:0]widthByPix, // real value minus 1
-    input  logic [10:0]heightByPix, // one CTU is 64x64
 
     // feedback to top level
     output logic       error_intr,
@@ -78,13 +69,29 @@ logic        ctx_init_done;
 logic        dec_result_correct;
 logic [5:0]  xCTB;
 logic [4:0]  yCTB;
+// control register details
+logic       slice_sao_luma_flag;
+logic       slice_sao_chroma_flag;
+logic       transquant_bypass_enabled_flag;
+logic [1:0] slice_type;
+logic [5:0] qp;
+logic [11:0]widthByPix; // real value minus 1
+logic [10:0]heightByPix; // one CTU is 64x64
 
 t_state_main state, nxt_state;
 
+assign slice_sao_luma_flag = reg_allout.reg_CABAC_SLICE_HEADER_0.slice_sao_luma_flag;
+assign slice_sao_chroma_flag = reg_allout.reg_CABAC_SLICE_HEADER_0.slice_sao_chroma_flag;
+assign transquant_bypass_enabled_flag = reg_allout.reg_CABAC_PPS_0.transformSkipEnabledFlag;
+assign slice_type = reg_allout.reg_CABAC_SLICE_HEADER_0.slice_type;
+assign qp = reg_allout.reg_CABAC_PPS_0.initQp + reg_allout.reg_CABAC_SLICE_HEADER_0.slice_qp_delta;
+assign widthByPix = reg_allout.reg_CABAC_SPS_0.widthByPix;
+assign heightByPix = reg_allout.reg_CABAC_SPS_0.heightByPix;
+
 always_comb
     case(state)
-    IDLE_MAIN:                nxt_state = cabac_start===1'b1 ? CALC_COR_MAIN : (cabac_init_ctx===1'b1 ? CTX_INIT_MAIN : IDLE_MAIN);
-    CTX_INIT_MAIN:            nxt_state = ctx_init_done===1'b1 ? ENDING_MAIN : CTX_INIT_MAIN;
+    IDLE_MAIN:                nxt_state = cabac_start===1'b1 ? CTX_INIT_MAIN : IDLE_MAIN;
+    CTX_INIT_MAIN:            nxt_state = ctx_init_done===1'b1 ? CALC_COR_MAIN : CTX_INIT_MAIN;
     CALC_COR_MAIN:            nxt_state = (slice_sao_luma_flag | slice_sao_chroma_flag)===1'b1 ? SAO_MAIN : CQT_MAIN;
     SAO_MAIN:                 nxt_state = sao_done===1'b1 ? CQT_MAIN : SAO_MAIN;
     CQT_MAIN:                 nxt_state = cqt_done===1'b1 ? EOS_FLAG_MAIN : CQT_MAIN;
@@ -131,6 +138,10 @@ always_ff @(posedge clk)
 always_ff @(posedge clk)
     if(!rst_n) end_of_slice_segment_flag <= 0;
     else if(state == EOS_FLAG_MAIN) end_of_slice_segment_flag <= ruiBin_vld ? ruiBin : end_of_slice_segment_flag;
+
+logic state_init_d;
+always_ff @(posedge clk) state_init_d <= (state == CTX_INIT_MAIN) ? 1'b1 : 1'b0;
+always_ff @(posedge clk) ctx_init_start <= (state == CTX_INIT_MAIN && !state_init_d) ? 1'b1 : 1'b0;
 
 // context memory access control
 always_ff @(posedge clk)
@@ -225,24 +236,6 @@ always_ff @(posedge clk)
     ADDR_INC_MAIN: yCTB <= (xCTB == widthByPix[11:6]) ? yCTB + 5'h1 : yCTB;
     default:       yCTB <= yCTB;
     endcase
-
-// basic_fifo #(
-//     .DATA_WIDTH(8),
-//     .ADDR_WIDTH(8),
-//     .DATA_DEPTH(256)
-// ) ctx_rdreq_fifo
-// (
-//     .clk,
-//     .rst_n,
-
-//     .din      (),
-//     .din_vld  (),
-//     .din_rdy  (),
-
-//     .dout     (ctxState),
-//     .dout_vld (ctx_we),
-//     .dout_rdy (1'b1)
-// );
 
 // Sub FSMs
 qdec_ctx_init ctx_init(
