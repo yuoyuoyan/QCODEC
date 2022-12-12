@@ -60,40 +60,40 @@ logic [2:0] target_bin;
 
 t_state_cu state, nxt_state;
 
-always_comb
+always @(*)
     case(state)
-    IDLE_CU:                   nxt_state = cu_start ? JUDGE_FIRST_BIT_CU : IDLE_CU;
-    JUDGE_FIRST_BIT_CU:        nxt_state = transquant_bypass_enabled_flag ? CU_TRANSQUANT_BYPASS_FLAG : 
-                                           (slice_type != SLICE_TYPE_I) ? CU_SKIP_FLAG : JUDGE_CB_SPLIT;
-    CU_TRANSQUANT_BYPASS_FLAG: nxt_state = dec_done ? ((slice_type != SLICE_TYPE_I) ? CU_SKIP_FLAG : JUDGE_CB_SPLIT) : CU_TRANSQUANT_BYPASS_FLAG;
-    CU_SKIP_FLAG:              nxt_state = dec_done ? (cu_skip_flag ? PU_CU : PRED_MODE_FLAG) : CU_SKIP_FLAG;
-    PRED_MODE_FLAG:            nxt_state = dec_done ? ((pred_mode_flag == PRED_MODE_FLAG_INTER || log2CUSize == minCbLog2CUSize) ? PART_MODE : JUDGE_CB_SPLIT) : PRED_MODE_FLAG;
+    IDLE_CU:                   nxt_state = cu_start===1'b1 ? JUDGE_FIRST_BIT_CU : IDLE_CU;
+    JUDGE_FIRST_BIT_CU:        nxt_state = transquant_bypass_enabled_flag===1'b1 ? CU_TRANSQUANT_BYPASS_FLAG : 
+                                           (slice_type != SLICE_TYPE_I)===1'b1 ? CU_SKIP_FLAG : JUDGE_CB_SPLIT;
+    CU_TRANSQUANT_BYPASS_FLAG: nxt_state = dec_done===1'b1 ? ((slice_type != SLICE_TYPE_I)===1'b1 ? CU_SKIP_FLAG : JUDGE_CB_SPLIT) : CU_TRANSQUANT_BYPASS_FLAG;
+    CU_SKIP_FLAG:              nxt_state = dec_done===1'b1 ? (cu_skip_flag===1'b1 ? PU_CU : PRED_MODE_FLAG) : CU_SKIP_FLAG;
+    PRED_MODE_FLAG:            nxt_state = dec_done===1'b1 ? ((pred_mode_flag == PRED_MODE_FLAG_INTER || log2CUSize == minCbLog2CUSize)===1'b1 ? PART_MODE : JUDGE_CB_SPLIT) : PRED_MODE_FLAG;
     // inter prediction part
-    PART_MODE:                 nxt_state = dec_done ? PU_CU : PART_MODE;
-    PU_CU:                     nxt_state = pu_done_intr ? ((part_mode != PART_MODE_INTER_PART_2Nx2N || merge_flag == 0) ? RQT_ROOT_CBF : trafo) : PU_CU;
-    RQT_ROOT_CBF:              nxt_state = rqt_root_cbf ? trafo : ENDING_CU;
+    PART_MODE:                 nxt_state = dec_done===1'b1 ? PU_CU : PART_MODE;
+    PU_CU:                     nxt_state = pu_done_intr===1'b1 ? ((part_mode != PART_MODE_INTER_PART_2Nx2N || merge_flag == 0)===1'b1 ? RQT_ROOT_CBF : TRAFO) : PU_CU;
+    RQT_ROOT_CBF:              nxt_state = rqt_root_cbf===1'b1 ? TRAFO : ENDING_CU;
     // intra prediction part
     JUDGE_CB_SPLIT:            nxt_state = PREV_INTRA_LUMA_PRED_FLAG;
-    PREV_INTRA_LUMA_PRED_FLAG: nxt_state = dec_done ? (intra_split_flag ? (prev_intra_luma_pred_flag[0] ? MPM_IDX0 : REM_INTRA_LUMA_PRED_MODE0) : 
-                                                                          (prev_intra_luma_pred_flag[0] ? MPM_IDX : REM_INTRA_LUMA_PRED_MODE)) : 
+    PREV_INTRA_LUMA_PRED_FLAG: nxt_state = dec_done===1'b1 ? (intra_split_flag===1'b1 ? (prev_intra_luma_pred_flag[0]===1'b1 ? MPM_IDX0 : REM_INTRA_LUMA_PRED_MODE0) : 
+                                                                                        (prev_intra_luma_pred_flag[0]===1'b1 ? MPM_IDX : REM_INTRA_LUMA_PRED_MODE)) : 
                                            PREV_INTRA_LUMA_PRED_FLAG;
-    MPM_IDX0:                  nxt_state = dec_done ? (prev_intra_luma_pred_flag[1] ? MPM_IDX1 : REM_INTRA_LUMA_PRED_MODE1) : MPM_IDX0;
-    MPM_IDX1:                  nxt_state = dec_done ? (prev_intra_luma_pred_flag[2] ? MPM_IDX2 : REM_INTRA_LUMA_PRED_MODE2) : MPM_IDX1;
-    MPM_IDX2:                  nxt_state = dec_done ? (prev_intra_luma_pred_flag[3] ? MPM_IDX3 : REM_INTRA_LUMA_PRED_MODE3) : MPM_IDX2;
-    MPM_IDX3:                  nxt_state = dec_done ? (intra_split_flag ? INTRA_CHROMA_PRED_MODE0 : INTRA_CHROMA_PRED_MODE) : MPM_IDX3;
-    MPM_IDX:                   nxt_state = dec_done ? (intra_split_flag ? INTRA_CHROMA_PRED_MODE0 : INTRA_CHROMA_PRED_MODE) : MPM_IDX;
-    REM_INTRA_LUMA_PRED_MODE0: nxt_state = dec_done ? (prev_intra_luma_pred_flag[1] ? MPM_IDX1 : REM_INTRA_LUMA_PRED_MODE1) : REM_INTRA_LUMA_PRED_MODE0;
-    REM_INTRA_LUMA_PRED_MODE1: nxt_state = dec_done ? (prev_intra_luma_pred_flag[2] ? MPM_IDX2 : REM_INTRA_LUMA_PRED_MODE2) : REM_INTRA_LUMA_PRED_MODE1;
-    REM_INTRA_LUMA_PRED_MODE2: nxt_state = dec_done ? (prev_intra_luma_pred_flag[3] ? MPM_IDX3 : REM_INTRA_LUMA_PRED_MODE3) : REM_INTRA_LUMA_PRED_MODE2;
-    REM_INTRA_LUMA_PRED_MODE3: nxt_state = dec_done ? (intra_split_flag ? INTRA_CHROMA_PRED_MODE0 : INTRA_CHROMA_PRED_MODE) : MPM_IDX;
-    REM_INTRA_LUMA_PRED_MODE:  nxt_state = dec_done ? (intra_split_flag ? INTRA_CHROMA_PRED_MODE0 : INTRA_CHROMA_PRED_MODE) : MPM_IDX;
-    INTRA_CHROMA_PRED_MODE0:   nxt_state = dec_done ? INTRA_CHROMA_PRED_MODE1 : INTRA_CHROMA_PRED_MODE0;
-    INTRA_CHROMA_PRED_MODE1:   nxt_state = dec_done ? INTRA_CHROMA_PRED_MODE2 : INTRA_CHROMA_PRED_MODE1;
-    INTRA_CHROMA_PRED_MODE2:   nxt_state = dec_done ? INTRA_CHROMA_PRED_MODE3 : INTRA_CHROMA_PRED_MODE2;
-    INTRA_CHROMA_PRED_MODE3:   nxt_state = dec_done ? TRAFO : INTRA_CHROMA_PRED_MODE3;
-    INTRA_CHROMA_PRED_MODE:    nxt_state = dec_done ? TRAFO : INTRA_CHROMA_PRED_MODE;
+    MPM_IDX0:                  nxt_state = dec_done===1'b1 ? (prev_intra_luma_pred_flag[1]===1'b1 ? MPM_IDX1 : REM_INTRA_LUMA_PRED_MODE1) : MPM_IDX0;
+    MPM_IDX1:                  nxt_state = dec_done===1'b1 ? (prev_intra_luma_pred_flag[2]===1'b1 ? MPM_IDX2 : REM_INTRA_LUMA_PRED_MODE2) : MPM_IDX1;
+    MPM_IDX2:                  nxt_state = dec_done===1'b1 ? (prev_intra_luma_pred_flag[3]===1'b1 ? MPM_IDX3 : REM_INTRA_LUMA_PRED_MODE3) : MPM_IDX2;
+    MPM_IDX3:                  nxt_state = dec_done===1'b1 ? (intra_split_flag===1'b1 ? INTRA_CHROMA_PRED_MODE0 : INTRA_CHROMA_PRED_MODE) : MPM_IDX3;
+    MPM_IDX:                   nxt_state = dec_done===1'b1 ? (intra_split_flag===1'b1 ? INTRA_CHROMA_PRED_MODE0 : INTRA_CHROMA_PRED_MODE) : MPM_IDX;
+    REM_INTRA_LUMA_PRED_MODE0: nxt_state = dec_done===1'b1 ? (prev_intra_luma_pred_flag[1]===1'b1 ? MPM_IDX1 : REM_INTRA_LUMA_PRED_MODE1) : REM_INTRA_LUMA_PRED_MODE0;
+    REM_INTRA_LUMA_PRED_MODE1: nxt_state = dec_done===1'b1 ? (prev_intra_luma_pred_flag[2]===1'b1 ? MPM_IDX2 : REM_INTRA_LUMA_PRED_MODE2) : REM_INTRA_LUMA_PRED_MODE1;
+    REM_INTRA_LUMA_PRED_MODE2: nxt_state = dec_done===1'b1 ? (prev_intra_luma_pred_flag[3]===1'b1 ? MPM_IDX3 : REM_INTRA_LUMA_PRED_MODE3) : REM_INTRA_LUMA_PRED_MODE2;
+    REM_INTRA_LUMA_PRED_MODE3: nxt_state = dec_done===1'b1 ? (intra_split_flag===1'b1 ? INTRA_CHROMA_PRED_MODE0 : INTRA_CHROMA_PRED_MODE) : MPM_IDX;
+    REM_INTRA_LUMA_PRED_MODE:  nxt_state = dec_done===1'b1 ? (intra_split_flag===1'b1 ? INTRA_CHROMA_PRED_MODE0 : INTRA_CHROMA_PRED_MODE) : MPM_IDX;
+    INTRA_CHROMA_PRED_MODE0:   nxt_state = dec_done===1'b1 ? INTRA_CHROMA_PRED_MODE1 : INTRA_CHROMA_PRED_MODE0;
+    INTRA_CHROMA_PRED_MODE1:   nxt_state = dec_done===1'b1 ? INTRA_CHROMA_PRED_MODE2 : INTRA_CHROMA_PRED_MODE1;
+    INTRA_CHROMA_PRED_MODE2:   nxt_state = dec_done===1'b1 ? INTRA_CHROMA_PRED_MODE3 : INTRA_CHROMA_PRED_MODE2;
+    INTRA_CHROMA_PRED_MODE3:   nxt_state = dec_done===1'b1 ? TRAFO : INTRA_CHROMA_PRED_MODE3;
+    INTRA_CHROMA_PRED_MODE:    nxt_state = dec_done===1'b1 ? TRAFO : INTRA_CHROMA_PRED_MODE;
     // transform part
-    TRAFO:                     nxt_state = trafo_done_intr ? ENDING_CU : TRAFO;
+    TRAFO:                     nxt_state = trafo_done_intr===1'b1 ? ENDING_CU : TRAFO;
     ENDING_CU:                 nxt_state = IDLE_CU;
     default:                   nxt_state = IDLE_CU;
     endcase
@@ -115,10 +115,10 @@ always_ff @(posedge clk)
     if(state == PART_MODE && dec_done) 
         part_mode <= pred_mode_flag ? ((log2CUSize == minCbLog2CUSize) ? PART_MODE_INTRA_PART_2Nx2N : {3'h0, ruiBin_delay[0]}) :
                                       ((log2CUSize == minCbLog2CUSize) ? {1'b0, ruiBin_delay[2:0]} : 
-                                       (amp_enabled_flag && (counter_coded_bin == 3) && ruiBin_delay[2:0] == {PART_MODE_INTRA_PART_2NxN, 1'b1}) ? {1'b0, ruiBin_delay[2:0]} :
-                                       (amp_enabled_flag && (counter_coded_bin == 4) && ruiBin_delay[3:1] == {PART_MODE_INTRA_PART_2NxN, 1'b0}) ? ruiBin_delay[3:0] :
-                                       (amp_enabled_flag && (counter_coded_bin == 3) && ruiBin_delay[2:0] == {PART_MODE_INTRA_PART_Nx2N, 1'b1}) ? {1'b0, ruiBin_delay[2:0]} :
-                                       (amp_enabled_flag && (counter_coded_bin == 4) && ruiBin_delay[3:1] == {PART_MODE_INTRA_PART_Nx2N, 1'b0}) ? ruiBin_delay[3:0] : 
+                                       (amp_enabled_flag && (counter_coded_bin == 3) && ruiBin_delay[2:0] == {PART_MODE_INTER_PART_2NxN, 1'b1}) ? {1'b0, ruiBin_delay[2:0]} :
+                                       (amp_enabled_flag && (counter_coded_bin == 4) && ruiBin_delay[3:1] == {PART_MODE_INTER_PART_2NxN, 1'b0}) ? ruiBin_delay[3:0] :
+                                       (amp_enabled_flag && (counter_coded_bin == 3) && ruiBin_delay[2:0] == {PART_MODE_INTER_PART_Nx2N, 1'b1}) ? {1'b0, ruiBin_delay[2:0]} :
+                                       (amp_enabled_flag && (counter_coded_bin == 4) && ruiBin_delay[3:1] == {PART_MODE_INTER_PART_Nx2N, 1'b0}) ? ruiBin_delay[3:0] : 
                                        {2'h0, ruiBin_delay[1:0]});
 always_ff @(posedge clk) rqt_root_cbf <= (state == RQT_ROOT_CBF && dec_done) ? ruiBin : rqt_root_cbf;
 always_ff @(posedge clk) intra_split_flag <= (pred_mode_flag == PRED_MODE_FLAG_INTRA && part_mode == PART_MODE_INTRA_PART_NxN) ? 1 : 0;
@@ -161,10 +161,10 @@ always_ff @(posedge clk)
     if(state == PART_MODE)
         target_bin <= pred_mode_flag ? ((log2CUSize == minCbLog2CUSize) ? 0 : 1) :
                                        ((log2CUSize == minCbLog2CUSize) ? 3 : 
-                                        (amp_enabled_flag && (counter_coded_bin == 2) && ruiBin_delay[1:0] == PART_MODE_INTRA_PART_2NxN) ? 3 :
-                                        (amp_enabled_flag && (counter_coded_bin == 3) && ruiBin_delay[2:0] == {PART_MODE_INTRA_PART_2NxN, 1'b0}) ? 4 :
-                                        (amp_enabled_flag && (counter_coded_bin == 2) && ruiBin_delay[1:0] == PART_MODE_INTRA_PART_Nx2N) ? 3 :
-                                        (amp_enabled_flag && (counter_coded_bin == 3) && ruiBin_delay[2:0] == {PART_MODE_INTRA_PART_Nx2N, 1'b0}) ? 4 : 
+                                        (amp_enabled_flag && (counter_coded_bin == 2) && ruiBin_delay[1:0] == PART_MODE_INTER_PART_2NxN) ? 3 :
+                                        (amp_enabled_flag && (counter_coded_bin == 3) && ruiBin_delay[2:0] == {PART_MODE_INTER_PART_2NxN, 1'b0}) ? 4 :
+                                        (amp_enabled_flag && (counter_coded_bin == 2) && ruiBin_delay[1:0] == PART_MODE_INTER_PART_Nx2N) ? 3 :
+                                        (amp_enabled_flag && (counter_coded_bin == 3) && ruiBin_delay[2:0] == {PART_MODE_INTER_PART_Nx2N, 1'b0}) ? 4 : 
                                         2);
     else if(state == MPM_IDX0 || state == MPM_IDX1 || state == MPM_IDX2 || state == MPM_IDX3 || state == MPM_IDX)
         target_bin <= (counter_coded_bin == 1 && ruiBin_delay[0] == 1'b1) ? 2  : 1;
@@ -241,8 +241,8 @@ always_ff @(posedge clk)
                                               (slice_type == SLICE_TYPE_P) ? (cabac_init_flag ? CTXIDX_CU_TRANSQUANT_BYPASS_FLAG[2] : CTXIDX_CU_TRANSQUANT_BYPASS_FLAG[1]) :
                                               (cabac_init_flag ? CTXIDX_CU_TRANSQUANT_BYPASS_FLAG[1] : CTXIDX_CU_TRANSQUANT_BYPASS_FLAG[2]);
     CU_SKIP_FLAG:              ctx_cu_addr <= (slice_type == SLICE_TYPE_I) ? 
-                                              condL? (condA ? CTXIDX_CU_SKIP_FLAG[2] : CTXIDX_CU_SKIP_FLAG[1]) : (conndA ? CTXIDX_CU_SKIP_FLAG[1] : CTXIDX_CU_SKIP_FLAG[0]) :
-                                              condL? (condA ? CTXIDX_CU_SKIP_FLAG[5] : CTXIDX_CU_SKIP_FLAG[4]) : (conndA ? CTXIDX_CU_SKIP_FLAG[4] : CTXIDX_CU_SKIP_FLAG[3]);
+                                              condL? (condA ? CTXIDX_CU_SKIP_FLAG[2] : CTXIDX_CU_SKIP_FLAG[1]) : (condA ? CTXIDX_CU_SKIP_FLAG[1] : CTXIDX_CU_SKIP_FLAG[0]) :
+                                              condL? (condA ? CTXIDX_CU_SKIP_FLAG[5] : CTXIDX_CU_SKIP_FLAG[4]) : (condA ? CTXIDX_CU_SKIP_FLAG[4] : CTXIDX_CU_SKIP_FLAG[3]);
     PRED_MODE_FLAG:            ctx_cu_addr <= (slice_type == SLICE_TYPE_P) ? (cabac_init_flag ? CTXIDX_PRED_MODE_FLAG[1] : CTXIDX_PRED_MODE_FLAG[0]) :
                                               (cabac_init_flag ? CTXIDX_PRED_MODE_FLAG[0] : CTXIDX_PRED_MODE_FLAG[1]);
     PART_MODE:                 ctx_cu_addr <= log2CUSize == minCbLog2CUSize ? ((counter_coded_bin >= 3) ? CTXIDX_PART_MODE[2] : CTXIDX_PART_MODE[0 + counter_coded_bin]) : 

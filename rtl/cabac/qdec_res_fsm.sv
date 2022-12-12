@@ -44,8 +44,8 @@ logic [3:0] last_sig_coeff_x_suffix, last_sig_coeff_y_suffix; // max 7
 logic [4:0] last_sig_coeff_x,        last_sig_coeff_y;
 // pointer to the current SB, and the last SB with non-zero elements, max SB 64
 // zigzag order inside TU
-logic [5:0] currSB_scan, LastSB_scan;
-logic [5:0] currSB_zigzag, LastSB_zigzag;
+logic [5:0] currSB_scan, lastSB_scan;
+logic [5:0] currSB_zigzag, lastSB_zigzag;
 // 0 is diagonal, 1 is horizontal, 2 is vertical, 3 is traverse
 // If intra mode is 6 to 14, use vertical, 22 to 30 use horizontal, otherwise 0
 logic [1:0] ScanOrderIdx;
@@ -87,40 +87,40 @@ t_state_res state, nxt_state;
 
 always_comb
     case(state)
-    IDLE_RES:                  nxt_state = res_start ? JUDGE_TRAFO_SKIP : IDLE_RES;
-    JUDGE_TRAFO_SKIP:          nxt_state = (transform_skip_enabled_flag && !cu_transquant_bypass_flag && (log2TrafoSize <= Log2MaxTransformSkipSize)) ? 
+    IDLE_RES:                  nxt_state = res_start===1'b1 ? JUDGE_TRAFO_SKIP : IDLE_RES;
+    JUDGE_TRAFO_SKIP:          nxt_state = (transform_skip_enabled_flag && !cu_transquant_bypass_flag && (log2TrafoSize <= Log2MaxTransformSkipSize))===1'b1 ? 
                                            TRANSFORM_SKIP_FLAG : LAST_SIG_COEFF_X_PREFIX;
-    TRANSFORM_SKIP_FLAG:       nxt_state = dec_done ? LAST_SIG_COEFF_X_PREFIX : TRANSFORM_SKIP_FLAG;
-    LAST_SIG_COEFF_X_PREFIX:   nxt_state = dec_done ? LAST_SIG_COEFF_Y_PREFIX : LAST_SIG_COEFF_X_PREFIX;
-    LAST_SIG_COEFF_Y_PREFIX:   nxt_state = dec_done ? (last_sig_coeff_x_prefix > 3 ? LAST_SIG_COEFF_X_SUFFIX : 
-                                                      (last_sig_coeff_y_prefix > 3 ? LAST_SIG_COEFF_Y_SUFFIX : FIND_LAST_POS)) 
+    TRANSFORM_SKIP_FLAG:       nxt_state = dec_done===1'b1 ? LAST_SIG_COEFF_X_PREFIX : TRANSFORM_SKIP_FLAG;
+    LAST_SIG_COEFF_X_PREFIX:   nxt_state = dec_done===1'b1 ? LAST_SIG_COEFF_Y_PREFIX : LAST_SIG_COEFF_X_PREFIX;
+    LAST_SIG_COEFF_Y_PREFIX:   nxt_state = dec_done===1'b1 ? ((last_sig_coeff_x_prefix > 3)===1'b1 ? LAST_SIG_COEFF_X_SUFFIX : 
+                                                             ((last_sig_coeff_y_prefix > 3)===1'b1 ? LAST_SIG_COEFF_Y_SUFFIX : FIND_LAST_POS_0)) 
                                            : LAST_SIG_COEFF_Y_PREFIX;
-    LAST_SIG_COEFF_X_SUFFIX:   nxt_state = dec_done ? (last_sig_coeff_y_prefix > 3 ? LAST_SIG_COEFF_Y_SUFFIX : FIND_LAST_POS) : LAST_SIG_COEFF_X_SUFFIX;
-    LAST_SIG_COEFF_Y_SUFFIX:   nxt_state = dec_done ? FIND_LAST_POS : LAST_SIG_COEFF_Y_SUFFIX;
+    LAST_SIG_COEFF_X_SUFFIX:   nxt_state = dec_done===1'b1 ? ((last_sig_coeff_y_prefix > 3)===1'b1 ? LAST_SIG_COEFF_Y_SUFFIX : FIND_LAST_POS_0) : LAST_SIG_COEFF_X_SUFFIX;
+    LAST_SIG_COEFF_Y_SUFFIX:   nxt_state = dec_done===1'b1 ? FIND_LAST_POS_0 : LAST_SIG_COEFF_Y_SUFFIX;
     FIND_LAST_POS_0:           nxt_state = FIND_LAST_POS_1; // need two clock cycles to calculate
     FIND_LAST_POS_1:           nxt_state = CALC_COR_RES;
     CALC_COR_RES:              nxt_state = JUDGE_CSBF;
-    JUDGE_CSBF:                nxt_state = (currSB_scan < LastSB_scan && currSB_scan > 0) ? CODED_SUB_BLOCK_FLAG : JUDGE_SIG_COEFF_FLAG;
-    CODED_SUB_BLOCK_FLAG:      nxt_state = dec_done ? JUDGE_SIG_COEFF_FLAG : CODED_SUB_BLOCK_FLAG;
-    JUDGE_SIG_COEFF_FLAG:      nxt_state = (currCSBF && (currPix_scan > 0 || !inferSbDcSigCoeffFlag)) ? SIG_COEFF_FLAG : NXT_SIG_COEFF_FLAG;
-    SIG_COEFF_FLAG:            nxt_state = dec_done ? NXT_SIG_COEFF_FLAG : SIG_COEFF_FLAG;
-    NXT_SIG_COEFF_FLAG:        nxt_state = currPix_scan==0 ? JUDGE_COEFF_ABS_GT1_FLAG : JUDGE_SIG_COEFF_FLAG;
-    JUDGE_COEFF_ABS_GT1_FLAG:  nxt_state = (curr_sig_coeff_flag && (numGt1Flag < 8)) ? COEFF_ABS_LEVEL_GT1_FLAG : NXT_COEFF_ABS_GT1_FLAG;
-    COEFF_ABS_LEVEL_GT1_FLAG:  nxt_state = dec_done ? NXT_COEFF_ABS_GT1_FLAG : COEFF_ABS_LEVEL_GT1_FLAG;
-    NXT_COEFF_ABS_GT1_FLAG:    nxt_state = currPix_scan==0 ? SIGN_HIDDEN : JUDGE_COEFF_ABS_GT1_FLAG;
+    JUDGE_CSBF:                nxt_state = (currSB_scan < lastSB_scan && currSB_scan > 0)===1'b1 ? CODED_SUB_BLOCK_FLAG : JUDGE_SIG_COEFF_FLAG;
+    CODED_SUB_BLOCK_FLAG:      nxt_state = dec_done===1'b1 ? JUDGE_SIG_COEFF_FLAG : CODED_SUB_BLOCK_FLAG;
+    JUDGE_SIG_COEFF_FLAG:      nxt_state = (currCSBF && (currPix_scan > 0 || !inferSbDcSigCoeffFlag))===1'b1 ? SIG_COEFF_FLAG : NXT_SIG_COEFF_FLAG;
+    SIG_COEFF_FLAG:            nxt_state = dec_done===1'b1 ? NXT_SIG_COEFF_FLAG : SIG_COEFF_FLAG;
+    NXT_SIG_COEFF_FLAG:        nxt_state = currPix_scan===4'h0 ? JUDGE_COEFF_ABS_GT1_FLAG : JUDGE_SIG_COEFF_FLAG;
+    JUDGE_COEFF_ABS_GT1_FLAG:  nxt_state = (curr_sig_coeff_flag && (numGt1Flag < 8))===1'b1 ? COEFF_ABS_LEVEL_GT1_FLAG : NXT_COEFF_ABS_GT1_FLAG;
+    COEFF_ABS_LEVEL_GT1_FLAG:  nxt_state = dec_done===1'b1 ? NXT_COEFF_ABS_GT1_FLAG : COEFF_ABS_LEVEL_GT1_FLAG;
+    NXT_COEFF_ABS_GT1_FLAG:    nxt_state = currPix_scan===4'h0 ? SIGN_HIDDEN : JUDGE_COEFF_ABS_GT1_FLAG;
     SIGN_HIDDEN:               nxt_state = JUDGE_COEFF_ABS_GT2_FLAG;
-    JUDGE_COEFF_ABS_GT2_FLAG:  nxt_state = (lastGt1ScanPos != 5'h1F) ? COEFF_ABS_LEVEL_GT2_FLAG : JUDGE_COEFF_SIGN_FLAG;
-    COEFF_ABS_LEVEL_GT2_FLAG:  nxt_state = dec_done ? JUDGE_COEFF_SIGN_FLAG : COEFF_ABS_LEVEL_GT2_FLAG;
-    JUDGE_COEFF_SIGN_FLAG:     nxt_state = (sign_data_hiding_enabled_flag && signHidden) ? (currCSBF ? COEFF_SIGN_FLAG_FIRST : JUDGE_COEFF_ABS_REM) :
-                                           (curr_sig_coeff_flag && (currPix_scan!=firstSigScanPos)) ?
+    JUDGE_COEFF_ABS_GT2_FLAG:  nxt_state = (lastGt1ScanPos != 5'h1F)===1'b1 ? COEFF_ABS_LEVEL_GT2_FLAG : JUDGE_COEFF_SIGN_FLAG;
+    COEFF_ABS_LEVEL_GT2_FLAG:  nxt_state = dec_done===1'b1 ? JUDGE_COEFF_SIGN_FLAG : COEFF_ABS_LEVEL_GT2_FLAG;
+    JUDGE_COEFF_SIGN_FLAG:     nxt_state = (sign_data_hiding_enabled_flag && signHidden)===1'b1 ? (currCSBF===1'b1 ? COEFF_SIGN_FLAG_FIRST : JUDGE_COEFF_ABS_REM) :
+                                           (curr_sig_coeff_flag && (currPix_scan!=firstSigScanPos))===1'b1 ?
                                            COEFF_SIGN_FLAG : NXT_COEFF_SIGN_FLAG;
-    COEFF_SIGN_FLAG_FIRST:     nxt_state = dec_done ? JUDGE_COEFF_ABS_REM : COEFF_SIGN_FLAG_FIRST;
-    COEFF_SIGN_FLAG:           nxt_state = dec_done ? NXT_COEFF_SIGN_FLAG : COEFF_SIGN_FLAG;
-    NXT_COEFF_SIGN_FLAG:       nxt_state = currPix_scan==0 ? JUDGE_COEFF_ABS_REM : JUDGE_COEFF_SIGN_FLAG;
-    JUDGE_COEFF_ABS_REM:       nxt_state = (baseLevelMatching) ? COEFF_ABS_LEVEL_REM : NXT_COEFF_ABS_REM;
-    COEFF_ABS_LEVEL_REM:       nxt_state = dec_done ? NXT_COEFF_ABS_REM : COEFF_ABS_LEVEL_REM;
-    NXT_COEFF_ABS_REM:         nxt_state = currPix_scan==0 ? ITERATION_RES : JUDGE_COEFF_ABS_REM;
-    ITERATION_RES:             nxt_state = currSB_scan==0 ? ENDING_RES : CALC_COR_RES;
+    COEFF_SIGN_FLAG_FIRST:     nxt_state = dec_done===1'b1 ? JUDGE_COEFF_ABS_REM : COEFF_SIGN_FLAG_FIRST;
+    COEFF_SIGN_FLAG:           nxt_state = dec_done===1'b1 ? NXT_COEFF_SIGN_FLAG : COEFF_SIGN_FLAG;
+    NXT_COEFF_SIGN_FLAG:       nxt_state = currPix_scan===4'h0 ? JUDGE_COEFF_ABS_REM : JUDGE_COEFF_SIGN_FLAG;
+    JUDGE_COEFF_ABS_REM:       nxt_state = baseLevelMatching===1'b1 ? COEFF_ABS_LEVEL_REM : NXT_COEFF_ABS_REM;
+    COEFF_ABS_LEVEL_REM:       nxt_state = dec_done===1'b1 ? NXT_COEFF_ABS_REM : COEFF_ABS_LEVEL_REM;
+    NXT_COEFF_ABS_REM:         nxt_state = currPix_scan===4'h0 ? ITERATION_RES : JUDGE_COEFF_ABS_REM;
+    ITERATION_RES:             nxt_state = currSB_scan===4'h0 ? ENDING_RES : CALC_COR_RES;
     ENDING_RES:                nxt_state = IDLE_RES;
     default:                   nxt_state = IDLE_RES;
     endcase
@@ -165,38 +165,38 @@ assign last_sig_coeff_x = {1'b0, last_sig_coeff_x_prefix} + {1'b0, last_sig_coef
 assign last_sig_coeff_y = {1'b0, last_sig_coeff_y_prefix} + {1'b0, last_sig_coeff_y_suffix};
 always_ff @(posedge clk)
     if(state == FIND_LAST_POS_0) begin
-        LastSB_zigzag <= {last_sig_coeff_y[4], last_sig_coeff_x[4], last_sig_coeff_y[3], last_sig_coeff_x[3], last_sig_coeff_y[2], last_sig_coeff_x[2]};
+        lastSB_zigzag <= {last_sig_coeff_y[4], last_sig_coeff_x[4], last_sig_coeff_y[3], last_sig_coeff_x[3], last_sig_coeff_y[2], last_sig_coeff_x[2]};
         lastPix_zigzag <= {last_sig_coeff_y[1], last_sig_coeff_x[1], last_sig_coeff_y[0], last_sig_coeff_x[0]};
     end
 always_ff @(posedge clk)
     if(state == FIND_LAST_POS_1) begin
         case({log2TrafoSize, ScanOrderIdx})
         // TU size 32x32
-        5'b101_00:    begin LastSB_scan<=REORDER_SCANIDX0_SIZE8X8_ZIGZAG_TO_SCAN[LastSB_zigzag]; lastPix_scan<=REORDER_SCANIDX0_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
-        5'b101_01:    begin LastSB_scan<=REORDER_SCANIDX1_SIZE8X8_ZIGZAG_TO_SCAN[LastSB_zigzag]; lastPix_scan<=REORDER_SCANIDX1_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
-        5'b101_10:    begin LastSB_scan<=REORDER_SCANIDX2_SIZE8X8_ZIGZAG_TO_SCAN[LastSB_zigzag]; lastPix_scan<=REORDER_SCANIDX2_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
+        5'b101_00:    begin lastSB_scan<=REORDER_SCANIDX0_SIZE8X8_ZIGZAG_TO_SCAN[lastSB_zigzag]; lastPix_scan<=REORDER_SCANIDX0_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
+        5'b101_01:    begin lastSB_scan<=REORDER_SCANIDX1_SIZE8X8_ZIGZAG_TO_SCAN[lastSB_zigzag]; lastPix_scan<=REORDER_SCANIDX1_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
+        5'b101_10:    begin lastSB_scan<=REORDER_SCANIDX2_SIZE8X8_ZIGZAG_TO_SCAN[lastSB_zigzag]; lastPix_scan<=REORDER_SCANIDX2_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
         // TU size 16x16
-        5'b100_00:    begin LastSB_scan<={2'h0, REORDER_SCANIDX0_SIZE4X4_ZIGZAG_TO_SCAN[LastSB_zigzag[3:0]]}; lastPix_scan<=REORDER_SCANIDX0_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
-        5'b100_01:    begin LastSB_scan<={2'h0, REORDER_SCANIDX1_SIZE4X4_ZIGZAG_TO_SCAN[LastSB_zigzag[3:0]]}; lastPix_scan<=REORDER_SCANIDX1_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
-        5'b100_10:    begin LastSB_scan<={2'h0, REORDER_SCANIDX2_SIZE4X4_ZIGZAG_TO_SCAN[LastSB_zigzag[3:0]]}; lastPix_scan<=REORDER_SCANIDX2_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
+        5'b100_00:    begin lastSB_scan<={2'h0, REORDER_SCANIDX0_SIZE4X4_ZIGZAG_TO_SCAN[lastSB_zigzag[3:0]]}; lastPix_scan<=REORDER_SCANIDX0_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
+        5'b100_01:    begin lastSB_scan<={2'h0, REORDER_SCANIDX1_SIZE4X4_ZIGZAG_TO_SCAN[lastSB_zigzag[3:0]]}; lastPix_scan<=REORDER_SCANIDX1_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
+        5'b100_10:    begin lastSB_scan<={2'h0, REORDER_SCANIDX2_SIZE4X4_ZIGZAG_TO_SCAN[lastSB_zigzag[3:0]]}; lastPix_scan<=REORDER_SCANIDX2_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
         // TU size 8x8
-        5'b011_00:    begin LastSB_scan<={4'h0, REORDER_SCANIDX0_SIZE2X2_ZIGZAG_TO_SCAN[LastSB_zigzag[1:0]]}; lastPix_scan<=REORDER_SCANIDX0_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
-        5'b011_01:    begin LastSB_scan<={4'h0, REORDER_SCANIDX1_SIZE2X2_ZIGZAG_TO_SCAN[LastSB_zigzag[1:0]]}; lastPix_scan<=REORDER_SCANIDX1_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
-        5'b011_10:    begin LastSB_scan<={4'h0, REORDER_SCANIDX2_SIZE2X2_ZIGZAG_TO_SCAN[LastSB_zigzag[1:0]]}; lastPix_scan<=REORDER_SCANIDX2_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
+        5'b011_00:    begin lastSB_scan<={4'h0, REORDER_SCANIDX0_SIZE2X2_ZIGZAG_TO_SCAN[lastSB_zigzag[1:0]]}; lastPix_scan<=REORDER_SCANIDX0_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
+        5'b011_01:    begin lastSB_scan<={4'h0, REORDER_SCANIDX1_SIZE2X2_ZIGZAG_TO_SCAN[lastSB_zigzag[1:0]]}; lastPix_scan<=REORDER_SCANIDX1_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
+        5'b011_10:    begin lastSB_scan<={4'h0, REORDER_SCANIDX2_SIZE2X2_ZIGZAG_TO_SCAN[lastSB_zigzag[1:0]]}; lastPix_scan<=REORDER_SCANIDX2_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
         // TU size 4x4
-        5'b010_00:    begin LastSB_scan<=6'h0; lastPix_scan<=REORDER_SCANIDX0_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
-        5'b010_01:    begin LastSB_scan<=6'h0; lastPix_scan<=REORDER_SCANIDX1_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
-        5'b010_10:    begin LastSB_scan<=6'h0; lastPix_scan<=REORDER_SCANIDX2_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
-        default:      begin LastSB_scan<=6'h0; lastPix_scan<=4'h0; end
+        5'b010_00:    begin lastSB_scan<=6'h0; lastPix_scan<=REORDER_SCANIDX0_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
+        5'b010_01:    begin lastSB_scan<=6'h0; lastPix_scan<=REORDER_SCANIDX1_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
+        5'b010_10:    begin lastSB_scan<=6'h0; lastPix_scan<=REORDER_SCANIDX2_SIZE4X4_ZIGZAG_TO_SCAN[lastPix_zigzag]; end
+        default:      begin lastSB_scan<=6'h0; lastPix_scan<=4'h0; end
         endcase
     end
 always_ff @(posedge clk) first_iter <= state == IDLE_RES ? 1 : (state == ITERATION_RES ? 0 : first_iter);
 always_ff @(posedge clk)
     if(state == IDLE_RES) currSB_scan <= 0;
-    else if(state == CALC_COR_RES) currSB_scan <= first_iter ? LastSB_scan : currSB_scan - 1;
+    else if(state == CALC_COR_RES) currSB_scan <= first_iter ? lastSB_scan : currSB_scan - 1;
 always_ff @(posedge clk)
     if(state == IDLE_RES) currPix_scan <= 4'hF;
-    else if(state == CALC_COR_RES) currPix_scan <= first_iter ? LastPix_scan : 4'hF;
+    else if(state == CALC_COR_RES) currPix_scan <= first_iter ? lastPix_scan : 4'hF;
     else if(state == NXT_SIG_COEFF_FLAG || state == NXT_COEFF_ABS_GT1_FLAG || state == NXT_COEFF_SIGN_FLAG || state == NXT_COEFF_ABS_REM) 
         currPix_scan <= (currPix_scan == 0) ? currPix_scan - 1 : lastSigScanPos[3:0];
 always_ff @(posedge clk)
@@ -278,7 +278,7 @@ always_ff @(posedge clk)
 // Remaining related
 always_ff @(posedge clk)
     if(state == CALC_COR_RES) numSigCoeff <= 0;
-    else if(state == JUDGE_COEFF_ABS_REM && curr_sig_coeff_flag[currPix_zigzag]) numSigCoeff <= numSigCoeff + 1;
+    else if(state == JUDGE_COEFF_ABS_REM && curr_sig_coeff_flag) numSigCoeff <= numSigCoeff + 1;
 always_ff @(posedge clk) 
     baseLevel <= (curr_sig_coeff_flag) ? (curr_coeff_abs_level_gt1_flag ? ((coeff_abs_level_gt2_flag && (currPix_scan == lastGt1ScanPos)) ? 3 : 2) 
                                           : 1) 
@@ -490,10 +490,10 @@ always_ff @(posedge clk) sigCtx_l0 <= CSBF_xplus1_zigzag ? (CSBF_yplus1_zigzag ?
                                                                                  (currPix_zigzag_y == 0 ? 2 : (currPix_zigzag_y == 2'h1 ? 1 : 0))) :
                                                            (CSBF_yplus1_zigzag ? (currPix_zigzag_x == 0 ? 2 : (currPix_zigzag_x == 2'h1 ? 1 : 0)) : 
                                                                                  (currPix_zigzag == 0 ? 2 : (currPix_zigzag_xplusy < 3 ? 1 : 0)));
-always_ff @(posedge clk) sigCtx_l1 <= (slice_type == SLICE_TYPE_I) ? (currSB_zigzag == 0 ? (log2TrafoSize == 3 ? (scanIdx == 0 ? sigCtx_l0 + 9 :
+always_ff @(posedge clk) sigCtx_l1 <= (slice_type == SLICE_TYPE_I) ? (currSB_zigzag == 0 ? (log2TrafoSize == 3 ? (ScanOrderIdx == 0 ? sigCtx_l0 + 9 :
                                                                                                                                  sigCtx_l0 + 15) : 
                                                                                                                   sigCtx_l0 + 21) : 
-                                                                                           (log2TrafoSize == 3 ? (scanIdx == 0 ? sigCtx_l0 + 12 :
+                                                                                           (log2TrafoSize == 3 ? (ScanOrderIdx == 0 ? sigCtx_l0 + 12 :
                                                                                                                                  sigCtx_l0 + 18) : 
                                                                                                                   sigCtx_l0 + 24) ) :
                                                                      (log2TrafoSize == 3 ? sigCtx_l0 + 33 : 

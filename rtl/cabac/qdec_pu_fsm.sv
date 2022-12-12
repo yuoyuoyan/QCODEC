@@ -48,17 +48,17 @@ t_state_pu state, nxt_state;
 
 always_comb
     case(state)
-    IDLE_PU:                   nxt_state = pu_start ? (cu_skip_flag && maxNumMergeCand>1 ? MERGE_IDX : MERGE_FLAG) : IDLE_PU;
-    MERGE_IDX:                 nxt_state = dec_done ? ENDING_PU : MERGE_IDX;
-    MERGE_FLAG:                nxt_state = dec_done ? (merge_flag && maxNumMergeCand>1 ? MERGE_IDX : JUDGE_INTER_PRED_IDC) : MERGE_FLAG;
-    JUDGE_INTER_PRED_IDC:      nxt_state = (slice_type == B) ? INTER_PRED_IDC : REF_IDX_L0;
-    INTER_PRED_IDC:            nxt_state = dec_done ? (inter_pred_idx == PRED_L1 ? REF_IDX_L1 : REF_IDX_L0) : INTER_PRED_IDC;
-    REF_IDX_L0:                nxt_state = dec_done ? MVD_CODING_0 : REF_IDX_L0;
-    MVD_CODING_0:              nxt_state = mvd_done_intr ? MVP_L0_FLAG : MVD_CODING_0;
-    MVP_L0_FLAG:               nxt_state = dec_done ? (inter_pred_idx == PRED_L0 ? ENDING_PU : REF_IDX_L1) : MVP_L0_FLAG;
-    REF_IDX_L1:                nxt_state = dec_done ? MVD_CODING_1 : REF_IDX_L1;
-    MVD_CODING_1:              nxt_state = mvd_done_intr ? MVP_L1_FLAG : MVD_CODING_1;
-    MVP_L1_FLAG:               nxt_state = dec_done ? ENDING_PU : MVP_L1_FLAG;
+    IDLE_PU:                   nxt_state = pu_start===1'b1 ? ((cu_skip_flag && maxNumMergeCand>1)===1'b1 ? MERGE_IDX : MERGE_FLAG) : IDLE_PU;
+    MERGE_IDX:                 nxt_state = dec_done===1'b1 ? ENDING_PU : MERGE_IDX;
+    MERGE_FLAG:                nxt_state = dec_done===1'b1 ? ((merge_flag && maxNumMergeCand>1)===1'b1 ? MERGE_IDX : JUDGE_INTER_PRED_IDC) : MERGE_FLAG;
+    JUDGE_INTER_PRED_IDC:      nxt_state = (slice_type == SLICE_TYPE_B)===1'b1 ? INTER_PRED_IDC : REF_IDX_L0;
+    INTER_PRED_IDC:            nxt_state = dec_done===1'b1 ? ((inter_pred_idc == PU_INTER_PRED_IDC_L1)===1'b1 ? REF_IDX_L1 : REF_IDX_L0) : INTER_PRED_IDC;
+    REF_IDX_L0:                nxt_state = dec_done===1'b1 ? MVD_CODING_0 : REF_IDX_L0;
+    MVD_CODING_0:              nxt_state = mvd_done_intr===1'b1 ? MVP_L0_FLAG : MVD_CODING_0;
+    MVP_L0_FLAG:               nxt_state = dec_done===1'b1 ? ((inter_pred_idc == PU_INTER_PRED_IDC_L0)===1'b1 ? ENDING_PU : REF_IDX_L1) : MVP_L0_FLAG;
+    REF_IDX_L1:                nxt_state = dec_done===1'b1 ? MVD_CODING_1 : REF_IDX_L1;
+    MVD_CODING_1:              nxt_state = mvd_done_intr===1'b1 ? MVP_L1_FLAG : MVD_CODING_1;
+    MVP_L1_FLAG:               nxt_state = dec_done===1'b1 ? ENDING_PU : MVP_L1_FLAG;
     ENDING_PU:                 nxt_state = IDLE_PU;
     default:                   nxt_state = IDLE_PU;
     endcase
@@ -97,7 +97,9 @@ always_ff @(posedge clk)
 
 always_ff @(posedge clk) merge_idx <= (state == MERGE_IDX && ruiBin_vld && !ruiBin) ? counter_coded_bin : merge_idx;
 always_ff @(posedge clk) merge_flag <= (state == MERGE_FLAG && ruiBin_vld) ? ruiBin : merge_flag;
-always_ff @(posedge clk) inter_pred_idc <= (state == INTER_PRED_IDC && dec_done) ? (target_bin == 2 ? ruiBin_delay[1:0] : ruiBin_delay[0]) : inter_pred_idc;
+always_ff @(posedge clk) inter_pred_idc <= (state == INTER_PRED_IDC && dec_done) ? (target_bin == 2 ? (ruiBin_delay[0] ? PU_INTER_PRED_IDC_L1 : PU_INTER_PRED_IDC_L0) : 
+                                                                                                      PU_INTER_PRED_IDC_BI) : 
+                                                                                   inter_pred_idc;
 always_ff @(posedge clk) ref_idx_l0 <= (state == REF_IDX_L0 && ruiBin_vld && !ruiBin) ? counter_coded_bin : ref_idx_l0;
 always_ff @(posedge clk) mvp_l0_flag <= (state == MVP_L0_FLAG && ruiBin_vld) ? ruiBin : mvp_l0_flag;
 always_ff @(posedge clk) ref_idx_l1 <= (state == REF_IDX_L1 && ruiBin_vld && !ruiBin) ? counter_coded_bin : ref_idx_l1;
@@ -114,10 +116,10 @@ logic [1:0] dec_phase; // count 4 clock cycles for normal-mode decoding
 always_ff @(posedge clk)
     if(state == IDLE_CU) ctx_pu_addr_vld_count <= 0;
     else if(dec_done) ctx_pu_addr_vld_count <= 0;
-    else if(ctx_cu_addr_vld) ctx_pu_addr_vld_count <= ctx_pu_addr_vld_count + 1;
+    else if(ctx_pu_addr_vld) ctx_pu_addr_vld_count <= ctx_pu_addr_vld_count + 1;
 always_ff @(posedge clk)
     if(state == IDLE_CU) dec_phase <= 0;
-    else if(ctx_cu_addr_vld) dec_phase <= 1;
+    else if(ctx_pu_addr_vld) dec_phase <= 1;
     else dec_phase <= (dec_phase == 0) ? 0 : dec_phase + 1;
 
 always_ff @(posedge clk)
@@ -134,19 +136,19 @@ always_ff @(posedge clk)
     endcase
 always_ff @(posedge clk)
     case(state)
-    IDLE_PU:                   ctx_cu_addr_vld <= 0;
-    MERGE_IDX:                 ctx_cu_addr_vld <= (ctx_pu_addr_vld_count == target_bin) ? 0 : ((dec_phase==0 || ctx_pu_addr_vld_count>0) ? 1 : 0);
-    MERGE_FLAG:                ctx_cu_addr_vld <= (ctx_pu_addr_vld_count == 1) ? 0 : (dec_phase==0 ? 1 : 0);
-    INTER_PRED_IDC:            ctx_cu_addr_vld <= (ctx_pu_addr_vld_count == target_bin) ? 0 : (dec_phase==0 ? 1 : 0);
-    REF_IDX_L0:                ctx_cu_addr_vld <= (ctx_pu_addr_vld_count == target_bin) ? 0 : ((dec_phase==0 || ctx_pu_addr_vld_count>1) ? 1 : 0);
-    MVD_CODING_0:              ctx_cu_addr_vld <= ctx_mvd_addr_vld;
-    MVP_L0_FLAG:               ctx_cu_addr_vld <= (ctx_pu_addr_vld_count == 1) ? 0 : (dec_phase==0 ? 1 : 0);
-    REF_IDX_L1:                ctx_cu_addr_vld <= (ctx_pu_addr_vld_count == target_bin) ? 0 : ((dec_phase==0 || ctx_pu_addr_vld_count>1) ? 1 : 0);
-    MVD_CODING_1:              ctx_cu_addr_vld <= ctx_mvd_addr_vld;
-    MVP_L1_FLAG:               ctx_cu_addr_vld <= (ctx_pu_addr_vld_count == 1) ? 0 : (dec_phase==0 ? 1 : 0);
-    default:                   ctx_cu_addr_vld <= 0;
+    IDLE_PU:                   ctx_pu_addr_vld <= 0;
+    MERGE_IDX:                 ctx_pu_addr_vld <= (ctx_pu_addr_vld_count == target_bin) ? 0 : ((dec_phase==0 || ctx_pu_addr_vld_count>0) ? 1 : 0);
+    MERGE_FLAG:                ctx_pu_addr_vld <= (ctx_pu_addr_vld_count == 1) ? 0 : (dec_phase==0 ? 1 : 0);
+    INTER_PRED_IDC:            ctx_pu_addr_vld <= (ctx_pu_addr_vld_count == target_bin) ? 0 : (dec_phase==0 ? 1 : 0);
+    REF_IDX_L0:                ctx_pu_addr_vld <= (ctx_pu_addr_vld_count == target_bin) ? 0 : ((dec_phase==0 || ctx_pu_addr_vld_count>1) ? 1 : 0);
+    MVD_CODING_0:              ctx_pu_addr_vld <= ctx_mvd_addr_vld;
+    MVP_L0_FLAG:               ctx_pu_addr_vld <= (ctx_pu_addr_vld_count == 1) ? 0 : (dec_phase==0 ? 1 : 0);
+    REF_IDX_L1:                ctx_pu_addr_vld <= (ctx_pu_addr_vld_count == target_bin) ? 0 : ((dec_phase==0 || ctx_pu_addr_vld_count>1) ? 1 : 0);
+    MVD_CODING_1:              ctx_pu_addr_vld <= ctx_mvd_addr_vld;
+    MVP_L1_FLAG:               ctx_pu_addr_vld <= (ctx_pu_addr_vld_count == 1) ? 0 : (dec_phase==0 ? 1 : 0);
+    default:                   ctx_pu_addr_vld <= 0;
     endcase
-always_ff @(posedge clk) dec_run_pu <= (state == MVD_CODING_0 || state == MVD_CODING_1) ? dec_run_mvd : ctx_cqt_addr_vld;
+always_ff @(posedge clk) dec_run_pu <= (state == MVD_CODING_0 || state == MVD_CODING_1) ? dec_run_mvd : ctx_pu_addr_vld;
 always_ff @(posedge clk)
     case(state)
     IDLE_PU:                   EPMode_pu <= 0;

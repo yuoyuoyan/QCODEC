@@ -24,7 +24,7 @@ typedef enum logic [7:0]  {IDLE_PU, MERGE_IDX, MERGE_FLAG, JUDGE_INTER_PRED_IDC,
                            REF_IDX_L0, MVD_CODING_0, MVP_L0_FLAG, REF_IDX_L1, MVD_CODING_1, MVP_L1_FLAG, ENDING_PU} t_state_pu;
 typedef enum logic [7:0]  {IDLE_MVD, ABS_MVD_GREATER0_FLAG0, ABS_MVD_GREATER0_FLAG1, ABS_MVD_GREATER1_FLAG0, ABS_MVD_GREATER1_FLAG1, 
                            JUDGE_MVD_MINUS2_0, ABS_MVD_MINUS2_0, MVD_SIGN_FLAG0, JUDGE_MVD_MINUS2_1, ABS_MVD_MINUS2_1, MVD_SIGN_FLAG1, ENDING_MVD} t_state_mvd;
-typedef enum logic [7:0]  {IDLE_TRAFO, JUDGE_SPLIT_TRAFO, SPLIT_TRANSFORM_FLAG, JUDGE_CBF_CHROMA, CBF_CB, CBF_CR, 
+typedef enum logic [7:0]  {IDLE_TRAFO, JUDGE_SPLIT_TRAFO, SPLIT_TRANSFORM_FLAG, JUDGE_CBF_CHROMA, CBF_CB, CBF_CR, JUDGE_TU,
                            ITERATION_TRAFO, JUDGE_CBF_LUMA, CBF_LUMA, TU_CODING, ENDING_TRAFO} t_state_trafo;
 typedef enum logic [7:0]  {IDLE_TU, CBF_TU, DELTA_QP, CHROMA_QP_OFFSET, RES_CODING_LUMA, JUDGE_RES_CHROMA, 
                            RES_CODING_CB, RES_CODING_CR, RES_CODING_PARENT_CB, RES_CODING_PARENT_CR, ENDING_TU} t_state_tu;
@@ -65,6 +65,11 @@ parameter  CHROMA_FORMAT_420                = 1;
 parameter  CHROMA_FORMAT_422                = 2;
 parameter  CHROMA_FORMAT_444                = 3;
 parameter  CHROMA_FORMAT_444_SEPARATE_COLOR = 4;
+
+// PU prediction direction
+parameter PU_INTER_PRED_IDC_L0 = 0;
+parameter PU_INTER_PRED_IDC_L1 = 1;
+parameter PU_INTER_PRED_IDC_BI = 2;
 
 `ifdef IVERILOG
 // sig coeff flag ctx id map

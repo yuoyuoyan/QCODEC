@@ -11,8 +11,8 @@ import qdec_cabac_package::*;
     input rst_n,
 
     // control register from top-level
-    input  t_CABAC_AO_s reg_all,
-    input  logic       cabac_start_1frame,
+    input  logic       cabac_start,
+    input  t_CABAC_AO_s reg_allout,
     input  logic       cabac_init_ctx,
     input  logic       cabac_init_flag,
     input  logic       slice_sao_luma_flag,
@@ -34,6 +34,11 @@ import qdec_cabac_package::*;
     input  logic [7:0] ctx_rdata,
     output logic       ctx_we,
     output logic       ctx_re,
+
+    // line buffer interface
+    output logic [11:0]lb_waddr,
+    output logic [7:0] lb_din,
+    output logic       lb_we,
 
     // arith decoder interface, need to handle state R/W bypass
     output logic       EPMode,
@@ -78,15 +83,15 @@ t_state_main state, nxt_state;
 
 always_comb
     case(state)
-    IDLE_MAIN:                nxt_state = cabac_start_1frame ? CALC_COR_MAIN : (cabac_init_ctx ? CTX_INIT_MAIN : IDLE_MAIN);
-    CTX_INIT_MAIN:            nxt_state = ctx_init_done ? ENDING_MAIN : CTX_INIT_MAIN;
-    CALC_COR_MAIN:            nxt_state = (slice_sao_luma_flag | slice_sao_chroma_flag) ? SAO_MAIN : CQT_MAIN;
-    SAO_MAIN:                 nxt_state = sao_done ? CQT_MAIN : SAO_MAIN;
-    CQT_MAIN:                 nxt_state = cqt_done ? EOS_FLAG_MAIN : CQT_MAIN;
-    EOS_FLAG_MAIN:            nxt_state = dec_done ? ADDR_INC_MAIN : EOS_FLAG_MAIN;
-    ADDR_INC_MAIN:            nxt_state = end_of_slice_segment_flag ? RBSP_STOP_ONE_BIT_MAIN : CALC_COR_MAIN;
-    RBSP_STOP_ONE_BIT_MAIN:   nxt_state = dec_done ? (dec_result_correct ? RBSP_ALIGNMENT_ZERO_BITS : ERROR_MAIN) : RBSP_STOP_ONE_BIT_MAIN;
-    RBSP_ALIGNMENT_ZERO_BITS: nxt_state = dec_done ? (dec_result_correct ? ENDING_MAIN : ERROR_MAIN) : RBSP_ALIGNMENT_ZERO_BITS;
+    IDLE_MAIN:                nxt_state = cabac_start===1'b1 ? CALC_COR_MAIN : (cabac_init_ctx===1'b1 ? CTX_INIT_MAIN : IDLE_MAIN);
+    CTX_INIT_MAIN:            nxt_state = ctx_init_done===1'b1 ? ENDING_MAIN : CTX_INIT_MAIN;
+    CALC_COR_MAIN:            nxt_state = (slice_sao_luma_flag | slice_sao_chroma_flag)===1'b1 ? SAO_MAIN : CQT_MAIN;
+    SAO_MAIN:                 nxt_state = sao_done===1'b1 ? CQT_MAIN : SAO_MAIN;
+    CQT_MAIN:                 nxt_state = cqt_done===1'b1 ? EOS_FLAG_MAIN : CQT_MAIN;
+    EOS_FLAG_MAIN:            nxt_state = dec_done===1'b1 ? ADDR_INC_MAIN : EOS_FLAG_MAIN;
+    ADDR_INC_MAIN:            nxt_state = end_of_slice_segment_flag===1'b1 ? RBSP_STOP_ONE_BIT_MAIN : CALC_COR_MAIN;
+    RBSP_STOP_ONE_BIT_MAIN:   nxt_state = dec_done===1'b1 ? (dec_result_correct===1'b1 ? RBSP_ALIGNMENT_ZERO_BITS : ERROR_MAIN) : RBSP_STOP_ONE_BIT_MAIN;
+    RBSP_ALIGNMENT_ZERO_BITS: nxt_state = dec_done===1'b1 ? (dec_result_correct===1'b1 ? ENDING_MAIN : ERROR_MAIN) : RBSP_ALIGNMENT_ZERO_BITS;
     ERROR_MAIN:               nxt_state = ERROR_MAIN;
     ENDING_MAIN:              nxt_state = IDLE_MAIN;
     default:                  nxt_state = IDLE_MAIN;

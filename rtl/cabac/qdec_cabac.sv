@@ -29,6 +29,7 @@ import qdec_cabac_package::*; import axi_pkg::*;
     input  logic        lb_re
 );
 
+logic        cabac_start;
 t_CABAC_AO_s  reg_allout;
 // decoded Bins from arith_dec to debin
 logic        ruiBin;
@@ -78,6 +79,7 @@ qdec_ctx_fsm ctx_fsm(
     .ctu_done_intr,
 
     // control registers
+    .cabac_start,
     .reg_allout,
 
     // ctx memory interface

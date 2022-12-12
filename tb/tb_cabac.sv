@@ -2,8 +2,6 @@
 
 module tb_cabac;
 
-import qdec_cabac_package::*;
-
 logic clk, rst_n;
 t_reg_req_s      reg_req;
 t_reg_resp_s     reg_resp;
@@ -34,7 +32,7 @@ initial begin
 end
 
 // Generate 100MHz clock signal
-always #5 clock <= ~clock;
+always #5 clk <= ~clk;
 
 qdec_cabac cabac(
     .clk,

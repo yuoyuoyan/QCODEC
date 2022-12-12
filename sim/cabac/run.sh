@@ -21,5 +21,6 @@ iverilog -o cabac.vvp -g2012 -DIVERILOG \
 ../../rtl/cabac/qdec_Arith_decoder.sv \
 ../../rtl/cabac/qdec_line_buffer.sv \
 ../../rtl/cabac/qdec_ctx_mem.sv \
-../../rtl/cabac/qdec_cabac.sv
+../../rtl/cabac/qdec_cabac.sv \
+../../tb/tb_cabac.sv
 vvp cabac.vvp

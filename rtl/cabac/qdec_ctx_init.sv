@@ -31,9 +31,9 @@ t_state_init state, nxt_state;
 
 always_comb
     case(state)
-    IDLE_INIT:                nxt_state = ctx_init_start ? SCAN_INIT : IDLE_INIT;
-    SCAN_INIT:                nxt_state = scan_done ? ENDING_INIT : SCAN_INIT;
-    ENDING_INIT:                 nxt_state = IDLE_INIT;
+    IDLE_INIT:                nxt_state = ctx_init_start===1'b1 ? SCAN_INIT : IDLE_INIT;
+    SCAN_INIT:                nxt_state = scan_done===1'b1 ? ENDING_INIT : SCAN_INIT;
+    ENDING_INIT:              nxt_state = IDLE_INIT;
     default:                  nxt_state = IDLE_INIT;
     endcase
 
@@ -53,8 +53,8 @@ always_ff @(posedge clk) begin
     counter_scan_d[1] <= counter_scan_d[0];
     counter_scan_d[2] <= counter_scan_d[1];
 end
-always_ff @(posedge clk) {scan_done, scan_done_d} <= {scan_done_d, (counter_scan == 10'd566) ? 1 : 0}; // totally 566 states to be initialized
-always_ff @(posedge clk) {scan_running, scan_running_d} <= {scan_running_d, (counter_scan == 10'd0) ? 0 : 1};
+always_ff @(posedge clk) {scan_done, scan_done_d} <= {scan_done_d, (counter_scan == 10'd566) ? 1'b1 : 1'b0}; // totally 566 states to be initialized
+always_ff @(posedge clk) {scan_running, scan_running_d} <= {scan_running_d, (counter_scan == 10'd0) ? 1'b0 : 1'b1};
 
 // context memory access control
 always_ff @(posedge clk) init_value <= CTX_INIT_VALUE[counter_scan];

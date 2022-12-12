@@ -36,19 +36,19 @@ t_state_mvd state, nxt_state;
 
 always_comb
     case(state)
-    IDLE_MVD:                  nxt_state = mvd_start ? ABS_MVD_GREATER0_FLAG0 : IDLE_MVD;
-    ABS_MVD_GREATER0_FLAG0:    nxt_state = dec_done ? ABS_MVD_GREATER0_FLAG1 : ABS_MVD_GREATER0_FLAG0;
-    ABS_MVD_GREATER0_FLAG1:    nxt_state = dec_done ? (abs_mvd_greater0_flag0 ? ABS_MVD_GREATER1_FLAG0 : 
-                                                      (abs_mvd_greater0_flag1 ? ABS_MVD_GREATER1_FLAG1 : ENDING_MVD)) :
+    IDLE_MVD:                  nxt_state = mvd_start===1'b1 ? ABS_MVD_GREATER0_FLAG0 : IDLE_MVD;
+    ABS_MVD_GREATER0_FLAG0:    nxt_state = dec_done===1'b1 ? ABS_MVD_GREATER0_FLAG1 : ABS_MVD_GREATER0_FLAG0;
+    ABS_MVD_GREATER0_FLAG1:    nxt_state = dec_done===1'b1 ? (abs_mvd_greater0_flag0===1'b1 ? ABS_MVD_GREATER1_FLAG0 : 
+                                                      (abs_mvd_greater0_flag1===1'b1 ? ABS_MVD_GREATER1_FLAG1 : ENDING_MVD)) :
                                                       ABS_MVD_GREATER0_FLAG1;
-    ABS_MVD_GREATER1_FLAG0:    nxt_state = dec_done ? (abs_mvd_greater0_flag1 ? ABS_MVD_GREATER1_FLAG1 : JUDGE_MVD_MINUS2_0) : ABS_MVD_GREATER1_FLAG0;
-    ABS_MVD_GREATER1_FLAG1:    nxt_state = dec_done ? JUDGE_MVD_MINUS2_0 : ABS_MVD_GREATER1_FLAG1;
-    JUDGE_MVD_MINUS2_0:        nxt_state = abs_mvd_greater0_flag0 ? (abs_mvd_greater1_flag0 ? ABS_MVD_MINUS2_0 : MVD_SIGN_FLAG0) : JUDGE_MVD_MINUS2_1;
-    ABS_MVD_MINUS2_0:          nxt_state = dec_done ? MVD_SIGN_FLAG0 : ABS_MVD_MINUS2_0;
-    MVD_SIGN_FLAG0:            nxt_state = dec_done ? JUDGE_MVD_MINUS2_1 : MVD_SIGN_FLAG0;
-    JUDGE_MVD_MINUS2_1:        nxt_state = abs_mvd_greater0_flag1 ? (abs_mvd_greater1_flag1 ? ABS_MVD_MINUS2_1 : MVD_SIGN_FLAG1) : ENDING_MVD;
-    ABS_MVD_MINUS2_1:          nxt_state = dec_done ? MVD_SIGN_FLAG1 : ABS_MVD_MINUS2_1;
-    MVD_SIGN_FLAG1:            nxt_state = dec_done ? ENDING_MVD : MVD_SIGN_FLAG1;
+    ABS_MVD_GREATER1_FLAG0:    nxt_state = dec_done===1'b1 ? (abs_mvd_greater0_flag1===1'b1 ? ABS_MVD_GREATER1_FLAG1 : JUDGE_MVD_MINUS2_0) : ABS_MVD_GREATER1_FLAG0;
+    ABS_MVD_GREATER1_FLAG1:    nxt_state = dec_done===1'b1 ? JUDGE_MVD_MINUS2_0 : ABS_MVD_GREATER1_FLAG1;
+    JUDGE_MVD_MINUS2_0:        nxt_state = abs_mvd_greater0_flag0===1'b1 ? (abs_mvd_greater1_flag0===1'b1 ? ABS_MVD_MINUS2_0 : MVD_SIGN_FLAG0) : JUDGE_MVD_MINUS2_1;
+    ABS_MVD_MINUS2_0:          nxt_state = dec_done===1'b1 ? MVD_SIGN_FLAG0 : ABS_MVD_MINUS2_0;
+    MVD_SIGN_FLAG0:            nxt_state = dec_done===1'b1 ? JUDGE_MVD_MINUS2_1 : MVD_SIGN_FLAG0;
+    JUDGE_MVD_MINUS2_1:        nxt_state = abs_mvd_greater0_flag1===1'b1 ? (abs_mvd_greater1_flag1===1'b1 ? ABS_MVD_MINUS2_1 : MVD_SIGN_FLAG1) : ENDING_MVD;
+    ABS_MVD_MINUS2_1:          nxt_state = dec_done===1'b1 ? MVD_SIGN_FLAG1 : ABS_MVD_MINUS2_1;
+    MVD_SIGN_FLAG1:            nxt_state = dec_done===1'b1 ? ENDING_MVD : MVD_SIGN_FLAG1;
     ENDING_MVD:                nxt_state = IDLE_MVD;
     default:                   nxt_state = IDLE_MVD;
     endcase
@@ -144,10 +144,10 @@ logic [1:0] dec_phase; // count 4 clock cycles for normal-mode decoding
 always_ff @(posedge clk)
     if(state == IDLE_CU) ctx_mvd_addr_vld_count <= 0;
     else if(dec_done) ctx_mvd_addr_vld_count <= 0;
-    else if(ctx_cu_addr_vld) ctx_mvd_addr_vld_count <= ctx_mvd_addr_vld_count + 1;
+    else if(ctx_mvd_addr_vld) ctx_mvd_addr_vld_count <= ctx_mvd_addr_vld_count + 1;
 always_ff @(posedge clk)
     if(state == IDLE_CU) dec_phase <= 0;
-    else if(ctx_cu_addr_vld) dec_phase <= 1;
+    else if(ctx_mvd_addr_vld) dec_phase <= 1;
     else dec_phase <= (dec_phase == 0) ? 0 : dec_phase + 1;
 
 always_ff @(posedge clk)

@@ -15,10 +15,10 @@ import qdec_cabac_package::*;
     input  logic        EPMode, // equal posibility, bypass mode
     input  logic        mps,
     input  logic        arithInit, // A pulse to initialize the arithmetic state
-    input  logic [5:0]  ctxState,
+    input  logic [6:0]  ctxState,
     input  logic        ctxState_vld,
     output logic        ctxState_rdy,
-    output logic [5:0]  ctxStateUpdate,
+    output logic [6:0]  ctxStateUpdate,
     output logic        ctxStateUpdate_vld,
     input  logic        ctxStateUpdate_rdy,
     input  logic        dec_run, // module above should pull up dec_run only when the dec_rdy is high

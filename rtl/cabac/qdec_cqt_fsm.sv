@@ -52,6 +52,7 @@ logic [2:0] log2CUSize;
 logic [9:0] ctx_cu_addr;
 logic       ctx_cu_addr_vld;
 logic       dec_run_cu;
+logic       EPMode_cu;
 logic       cu_done_intr;
 logic       CU_CQT_start;
 logic        availableL, availableA; // indicate the availablity of the CU at the left or top of current CU
@@ -67,12 +68,12 @@ t_state_cqt state, nxt_state;
 
 always_comb
     case(state)
-    IDLE_CQT:                 nxt_state = cqt_start ? CALC_COR_SAO : IDLE_SAO;
-    CALC_COR_CQT:             nxt_state = (!split_point_oob & (split_depth != 3'd4)) ? SPLIT_CU_FLAG_CQT : OOB_FORCE_SPLIT_CQT;
-    SPLIT_CU_FLAG_CQT:        nxt_state = dec_done? (ruiBin_r? JUDGE_CQT : CU_CQT) : SPLIT_CU_FLAG_CQT;
+    IDLE_CQT:                 nxt_state = cqt_start===1'b1 ? CALC_COR_CQT : IDLE_CQT;
+    CALC_COR_CQT:             nxt_state = (!split_point_oob & (split_depth != 3'd4))===1'b1 ? SPLIT_CU_FLAG_CQT : OOB_FORCE_SPLIT_CQT;
+    SPLIT_CU_FLAG_CQT:        nxt_state = dec_done===1'b1 ? (ruiBin_r===1'b1 ? JUDGE_CQT : CU_CQT) : SPLIT_CU_FLAG_CQT;
     OOB_FORCE_SPLIT_CQT:      nxt_state = JUDGE_CQT;
-    CU_CQT:                   nxt_state = cu_done_intr ? JUDGE_CQT : CU_CQT;
-    JUDGE_CQT:                nxt_state = (lastCUinCTU & (!split_flag_curr)) ? ENDING_CQT : ITERATION_CQT;
+    CU_CQT:                   nxt_state = cu_done_intr===1'b1 ? JUDGE_CQT : CU_CQT;
+    JUDGE_CQT:                nxt_state = (lastCUinCTU & (!split_flag_curr))===1'b1 ? ENDING_CQT : ITERATION_CQT;
     ITERATION_CQT:            nxt_state = CALC_COR_CQT;
     ENDING_CQT:               nxt_state = IDLE_CQT;
     default:                  nxt_state = IDLE_CQT;
@@ -346,7 +347,7 @@ always_ff @(posedge clk)
 
 logic state_SPLIT_CU_FLAG_CQT_d, state_start_SPLIT_CU_FLAG_CQT;
 always_ff @(posedge clk) state_SPLIT_CU_FLAG_CQT_d <= (state == SPLIT_CU_FLAG_CQT) ? 1 : 0;
-assign state_start_SPLIT_CU_FLAG_CQT = ({state_SPLIT_CU_FLAG_CQT_d, (state == SPLIT_CU_FLAG_CQT) ? 1 : 0} == 2'b01) ? 1 : 0;
+assign state_start_SPLIT_CU_FLAG_CQT = ({state_SPLIT_CU_FLAG_CQT_d, (state == SPLIT_CU_FLAG_CQT) ? 1'b1 : 1'b0} == 2'b01) ? 1'b1 : 1'b0;
 always_ff @(posedge clk) dec_run_cqt <= (state == CU_CQT) ? dec_run_cu : state_start_SPLIT_CU_FLAG_CQT;
 always_ff @(posedge clk) ctx_cqt_addr_vld <= state_start_SPLIT_CU_FLAG_CQT;
 always_ff @(posedge clk) EPMode_cqt <= (state == CU_CQT) ? EPMode_cu : 1'b0;

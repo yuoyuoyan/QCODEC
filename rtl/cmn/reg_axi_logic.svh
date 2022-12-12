@@ -34,10 +34,10 @@ localparam		WRIDLE	= 2'd0,
 //------------------------AXI write fsm------------------
 assign reg_resp.AWREADY = (wstate == WRIDLE);
 assign reg_resp.WREADY  = (wstate == WRDATA);
-assign reg_resp.B.BRESP   = AXI_OKAY_RESP;
-assign reg_resp.B.BID	= 0;
+assign reg_resp.BRESP   = AXI_OKAY_RESP;
+assign reg_resp.BID	= 0;
 assign reg_resp.BVALID  = (wstate == WRRESP);
-assign wmask   = { {8{reg_req.W.WSTRB[3]}}, {8{reg_req.W.WSTRB[2]}}, {8{reg_req.W.WSTRB[1]}}, {8{reg_req.W.WSTRB[0]}} };
+assign wmask   = { {8{reg_req.WSTRB[3]}}, {8{reg_req.WSTRB[2]}}, {8{reg_req.WSTRB[1]}}, {8{reg_req.WSTRB[0]}} };
 assign aw_hs   = reg_req.AWVALID & reg_resp.AWREADY;
 assign w_hs    = reg_req.WVALID & reg_resp.WREADY;
 
@@ -75,17 +75,17 @@ end
 // waddr
 always @(posedge ACLK) begin
     if (aw_hs)
-        waddr <= reg_req.AW.AWADDR[ADDR_BITS-1:0];
+        waddr <= reg_req.AWADDR[ADDR_BITS-1:0];
 end
 
 //------------------------AXI read fsm-------------------
 assign reg_resp.ARREADY = (rstate == RDIDLE);
-assign reg_resp.R.RDATA   = rdata;
-assign reg_resp.R.RRESP   = AXI_OKAY_RESP;
-assign reg_resp.R.RID	= 'd0;
+assign reg_resp.RDATA   = rdata;
+assign reg_resp.RRESP   = AXI_OKAY_RESP;
+assign reg_resp.RID	= 'd0;
 assign reg_resp.RVALID  = (rstate == RDDATA);
 assign ar_hs   = reg_req.ARVALID & reg_resp.ARREADY;
-assign raddr   = reg_req.AR.ARADDR[ADDR_BITS-1:0];
+assign raddr   = reg_req.ARADDR[ADDR_BITS-1:0];
 
 // rstate
 always @(posedge ACLK) begin
@@ -135,5 +135,5 @@ assign reg_addr_rd	= raddr;
 
 
 logic	[R_DWID-1:0]	reg_req_hwdata;
-assign reg_req_hwdata	= reg_req.W.WDATA;
+assign reg_req_hwdata	= reg_req.WDATA;
 

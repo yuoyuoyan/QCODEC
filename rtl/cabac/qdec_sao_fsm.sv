@@ -43,42 +43,42 @@ logic [3:0] dec_count_type, dec_count_abs, dec_count_sign, dec_count_bo, dec_cou
 logic [3:0] counter_dec_run, counter_dec_run_d;
 logic [2:0] ctx_sao_addr_vld_d; // no addr_vld in 4 clock cycles for normal mode
 
-t_state_init state, nxt_state;
+t_state_sao state, nxt_state;
 
 always_comb
     case(state)
-    IDLE_SAO:                 nxt_state = sao_start ? CALC_COR_SAO : IDLE_SAO;
-    CALC_COR_SAO:             nxt_state = left_CTU_exists ? SAO_MERGE_LEFT_FLAG : 
-                                          up_CTU_exists ? SAO_MERGE_UP_FLAG : SAO_TYPE_IDX_LUMA;
-    SAO_MERGE_LEFT_FLAG:      nxt_state = dec_done ? (sao_merge_left_flag ? ENDING_SAO : 
-                                                      slice_sao_luma_flag ? SAO_TYPE_IDX_LUMA :
-                                                      slice_sao_chroma_flag ? SAO_TYPE_IDX_CHROMA : ENDING_SAO) :
+    IDLE_SAO:                 nxt_state = sao_start===1'b1 ? CALC_COR_SAO : IDLE_SAO;
+    CALC_COR_SAO:             nxt_state = left_CTU_exists===1'b1 ? SAO_MERGE_LEFT_FLAG : 
+                                          up_CTU_exists===1'b1 ? SAO_MERGE_UP_FLAG : SAO_TYPE_IDX_LUMA;
+    SAO_MERGE_LEFT_FLAG:      nxt_state = dec_done===1'b1 ? (sao_merge_left_flag===1'b1 ? ENDING_SAO : 
+                                                             slice_sao_luma_flag===1'b1 ? SAO_TYPE_IDX_LUMA :
+                                                             slice_sao_chroma_flag===1'b1 ? SAO_TYPE_IDX_CHROMA : ENDING_SAO) :
                                           SAO_MERGE_LEFT_FLAG;
-    SAO_MERGE_UP_FLAG:        nxt_state = dec_done ? (sao_merge_up_flag ? ENDING_SAO : 
-                                                      slice_sao_luma_flag ? SAO_TYPE_IDX_LUMA :
-                                                      slice_sao_chroma_flag ? SAO_TYPE_IDX_CHROMA : ENDING_SAO) :
+    SAO_MERGE_UP_FLAG:        nxt_state = dec_done===1'b1 ? (sao_merge_up_flag===1'b1 ? ENDING_SAO : 
+                                                             slice_sao_luma_flag===1'b1 ? SAO_TYPE_IDX_LUMA :
+                                                             slice_sao_chroma_flag===1'b1 ? SAO_TYPE_IDX_CHROMA : ENDING_SAO) :
                                           SAO_MERGE_UP_FLAG;
-    SAO_TYPE_IDX_LUMA:        nxt_state = dec_done ? (sao_type_luma == 0 ? (slice_sao_chroma_flag ? SAO_TYPE_IDX_CHROMA : ENDING_SAO) : 
-                                                      SAO_LUMA_OFFSET_ABS_4) :
+    SAO_TYPE_IDX_LUMA:        nxt_state = dec_done===1'b1 ? (sao_type_luma===2'h0 ? (slice_sao_chroma_flag===1'b1 ? SAO_TYPE_IDX_CHROMA : ENDING_SAO) : 
+                                                             SAO_LUMA_OFFSET_ABS_4) :
                                           SAO_TYPE_IDX_LUMA;
-    SAO_LUMA_OFFSET_ABS_4:    nxt_state = dec_done ? (sao_type_luma == 1 ? SAO_LUMA_OFFSET_SIGN_4 : SAO_EO_CLASS_LUMA) :
+    SAO_LUMA_OFFSET_ABS_4:    nxt_state = dec_done===1'b1 ? (sao_type_luma===2'h1 ? SAO_LUMA_OFFSET_SIGN_4 : SAO_EO_CLASS_LUMA) :
                                           SAO_LUMA_OFFSET_ABS_4;
-    SAO_LUMA_OFFSET_SIGN_4:   nxt_state = dec_done ? SAO_LUMA_BAND_POS : SAO_LUMA_OFFSET_SIGN_4;
-    SAO_LUMA_BAND_POS:        nxt_state = dec_done ? (slice_sao_chroma_flag ? SAO_TYPE_IDX_CHROMA : ENDING_SAO) :
+    SAO_LUMA_OFFSET_SIGN_4:   nxt_state = dec_done===1'b1 ? SAO_LUMA_BAND_POS : SAO_LUMA_OFFSET_SIGN_4;
+    SAO_LUMA_BAND_POS:        nxt_state = dec_done===1'b1 ? (slice_sao_chroma_flag===1'b1 ? SAO_TYPE_IDX_CHROMA : ENDING_SAO) :
                                           SAO_LUMA_BAND_POS;
-    SAO_EO_CLASS_LUMA:        nxt_state = dec_done ? (slice_sao_chroma_flag ? SAO_TYPE_IDX_CHROMA : ENDING_SAO) : 
+    SAO_EO_CLASS_LUMA:        nxt_state = dec_done===1'b1 ? (slice_sao_chroma_flag===1'b1 ? SAO_TYPE_IDX_CHROMA : ENDING_SAO) : 
                                           SAO_EO_CLASS_LUMA;
-    SAO_TYPE_IDX_CHROMA:      nxt_state = dec_done ? (sao_type_chroma == 0 ? ENDING_SAO : SAO_CB_OFFSET_ABS_4) :
+    SAO_TYPE_IDX_CHROMA:      nxt_state = dec_done===1'b1 ? (sao_type_chroma===2'h0 ? ENDING_SAO : SAO_CB_OFFSET_ABS_4) :
                                           SAO_TYPE_IDX_CHROMA;
-    SAO_CB_OFFSET_ABS_4:      nxt_state = dec_done ? (sao_type_chroma == 1 ? SAO_CB_OFFSET_SIGN_4 : SAO_EO_CLASS_CHROMA) :
+    SAO_CB_OFFSET_ABS_4:      nxt_state = dec_done===1'b1 ? (sao_type_chroma===2'h1 ? SAO_CB_OFFSET_SIGN_4 : SAO_EO_CLASS_CHROMA) :
                                           SAO_CB_OFFSET_ABS_4;
-    SAO_CB_OFFSET_SIGN_4:     nxt_state = dec_done ? SAO_CB_BAND_POS : SAO_CB_OFFSET_SIGN_4;
-    SAO_CB_BAND_POS:          nxt_state = dec_done ? SAO_CR_OFFSET_ABS_4 : SAO_CB_BAND_POS;
-    SAO_EO_CLASS_CHROMA:          nxt_state = dec_done ? SAO_CR_OFFSET_ABS_4 : SAO_EO_CLASS_CHROMA;
-    SAO_CR_OFFSET_ABS_4:      nxt_state = dec_done ? (sao_type_chroma == 1 ? SAO_CR_OFFSET_SIGN_4 : ENDING_SAO) :
+    SAO_CB_OFFSET_SIGN_4:     nxt_state = dec_done===1'b1 ? SAO_CB_BAND_POS : SAO_CB_OFFSET_SIGN_4;
+    SAO_CB_BAND_POS:          nxt_state = dec_done===1'b1 ? SAO_CR_OFFSET_ABS_4 : SAO_CB_BAND_POS;
+    SAO_EO_CLASS_CHROMA:      nxt_state = dec_done===1'b1 ? SAO_CR_OFFSET_ABS_4 : SAO_EO_CLASS_CHROMA;
+    SAO_CR_OFFSET_ABS_4:      nxt_state = dec_done===1'b1 ? (sao_type_chroma===2'h1 ? SAO_CR_OFFSET_SIGN_4 : ENDING_SAO) :
                                           SAO_CR_OFFSET_ABS_4;
-    SAO_CR_OFFSET_SIGN_4:     nxt_state = dec_done ? SAO_CR_BAND_POS : SAO_CR_OFFSET_SIGN_4;
-    SAO_CR_BAND_POS:          nxt_state = dec_done ? ENDING_SAO : SAO_CR_BAND_POS;
+    SAO_CR_OFFSET_SIGN_4:     nxt_state = dec_done===1'b1 ? SAO_CR_BAND_POS : SAO_CR_OFFSET_SIGN_4;
+    SAO_CR_BAND_POS:          nxt_state = dec_done===1'b1 ? ENDING_SAO : SAO_CR_BAND_POS;
     ENDING_SAO:               nxt_state = IDLE_SAO;
     default:                  nxt_state = IDLE_SAO;
     endcase

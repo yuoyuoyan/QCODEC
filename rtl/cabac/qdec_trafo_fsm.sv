@@ -9,7 +9,7 @@ import qdec_cabac_package::*;
     input clk,
     input rst_n,
 
-    input  logic       cu_start,
+    input  logic       trafo_start,
     input  logic [9:0] xCU,
     input  logic [8:0] yCU,
     input  logic       pred_mode,
@@ -68,18 +68,18 @@ t_state_trafo state, nxt_state;
 
 always_comb
     case(state)
-    IDLE_TRAFO:                nxt_state = cu_start ? JUDGE_SPLIT_TRAFO : IDLE_TRAFO;
-    JUDGE_SPLIT_TRAFO:         nxt_state = (curr_log2Size <= maxTbLog2SizeY && curr_log2Size > minTbLog2SizeY && curr_depth < maxTrafoDepth && !(intra_split_flag && (curr_depth == 0))) ?
+    IDLE_TRAFO:                nxt_state = trafo_start===1'b1 ? JUDGE_SPLIT_TRAFO : IDLE_TRAFO;
+    JUDGE_SPLIT_TRAFO:         nxt_state = (curr_log2Size <= maxTbLog2SizeY && curr_log2Size > minTbLog2SizeY && curr_depth < maxTrafoDepth && !(intra_split_flag && (curr_depth == 0)))===1'b1 ?
                                            SPLIT_TRANSFORM_FLAG : JUDGE_CBF_CHROMA;
-    SPLIT_TRANSFORM_FLAG:      nxt_state = dec_done ? JUDGE_CBF_CHROMA : SPLIT_TRANSFORM_FLAG;
-    JUDGE_CBF_CHROMA:          nxt_state = (curr_log2Size > 2) ? (parent_cbf_cb ? CBF_CB : (parent_cbf_cr ? CBF_CR : JUDGE_TU)) : JUDGE_TU;
-    CBF_CB:                    nxt_state = dec_done ? (parent_cbf_cr ? CBF_CR : JUDGE_TU) : CBF_CB;
-    CBF_CR:                    nxt_state = dec_done ? JUDGE_TU : CBF_CR;
-    JUDGE_TU:                  nxt_state = curr_split_transform_flag ? ITERATION_TRAFO : JUDGE_CBF_LUMA;
+    SPLIT_TRANSFORM_FLAG:      nxt_state = dec_done===1'b1 ? JUDGE_CBF_CHROMA : SPLIT_TRANSFORM_FLAG;
+    JUDGE_CBF_CHROMA:          nxt_state = (curr_log2Size > 2)===1'b1 ? (parent_cbf_cb===1'b1 ? CBF_CB : (parent_cbf_cr===1'b1 ? CBF_CR : JUDGE_TU)) : JUDGE_TU;
+    CBF_CB:                    nxt_state = dec_done===1'b1 ? (parent_cbf_cr===1'b1 ? CBF_CR : JUDGE_TU) : CBF_CB;
+    CBF_CR:                    nxt_state = dec_done===1'b1 ? JUDGE_TU : CBF_CR;
+    JUDGE_TU:                  nxt_state = curr_split_transform_flag===1'b1 ? ITERATION_TRAFO : JUDGE_CBF_LUMA;
     ITERATION_TRAFO:           nxt_state = JUDGE_SPLIT_TRAFO;
-    JUDGE_CBF_LUMA:            nxt_state = (pred_mode == PRED_MODE_FLAG_INTRA || curr_depth != 0 || curr_cbf_cb || curr_cbf_cr) ? CBF_LUMA : TU_CODING;
-    CBF_LUMA:                  nxt_state = dec_done ? TU_CODING : CBF_LUMA;
-    TU_CODING:                 nxt_state = tu_done_intr ? (end_of_cu ? ENDING_TRAFO : ITERATION_TRAFO) : TU_CODING;
+    JUDGE_CBF_LUMA:            nxt_state = (pred_mode == PRED_MODE_FLAG_INTRA || curr_depth != 0 || curr_cbf_cb || curr_cbf_cr)===1'b1 ? CBF_LUMA : TU_CODING;
+    CBF_LUMA:                  nxt_state = dec_done===1'b1 ? TU_CODING : CBF_LUMA;
+    TU_CODING:                 nxt_state = tu_done_intr===1'b1 ? (end_of_cu===1'b1 ? ENDING_TRAFO : ITERATION_TRAFO) : TU_CODING;
     ENDING_TRAFO:              nxt_state = IDLE_TRAFO;
     default:                   nxt_state = IDLE_TRAFO;
     endcase

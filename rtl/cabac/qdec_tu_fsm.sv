@@ -9,7 +9,7 @@ import qdec_cabac_package::*;
     input clk,
     input rst_n,
 
-    input  logic       cu_start,
+    input  logic       tu_start,
     input  logic [2:0] log2TrafoSize,
     input  logic [2:0] trafoDepth,
     input  logic       cbf_luma,
@@ -47,18 +47,20 @@ t_state_tu state, nxt_state;
 
 always_comb
     case(state)
-    IDLE_TU:                   nxt_state = tu_start ? CBF_TU : IDLE_TU;
-    CBF_TU:                    nxt_state = (cbf_luma | cbf_chroma) ? DELTA_QP : ENDING_TU;
-    DELTA_QP:                  nxt_state = delta_qp_done_intr ? ((cbf_chroma & !cu_transquant_bypass_flag) ? CHROMA_QP_OFFSET : (cbf_luma ? RES_CODING_LUMA : JUDGE_RES_CHROMA)) : DELTA_QP;
-    CHROMA_QP_OFFSET:          nxt_state = chroma_qp_offset_done_intr ? (cbf_luma ? RES_CODING_LUMA : JUDGE_RES_CHROMA) : CHROMA_QP_OFFSET;
-    RES_CODING_LUMA:           nxt_state = res_done_intr ? JUDGE_RES_CHROMA : RES_CODING_LUMA;
-    JUDGE_RES_CHROMA:          nxt_state = (log2TrafoSize > 2) ? (cbf_cb ? RES_CODING_CB : (cbf_cr ? RES_CODING_CR : ENDING_TU)) :
-                                                                 (blkIdx == 3 ? (parent_cbf_cb ? RES_CODING_PARENT_CB : (parent_cbf_cr ? RES_CODING_PARENT_CR : ENDING_TU)) :
+    IDLE_TU:                   nxt_state = tu_start===1'b1 ? CBF_TU : IDLE_TU;
+    CBF_TU:                    nxt_state = (cbf_luma | cbf_chroma)===1'b1 ? DELTA_QP : ENDING_TU;
+    DELTA_QP:                  nxt_state = dqp_done_intr===1'b1 ? ((cbf_chroma & !cu_transquant_bypass_flag)===1'b1 ? CHROMA_QP_OFFSET : 
+                                                                                                                           (cbf_luma===1'b1 ? RES_CODING_LUMA : JUDGE_RES_CHROMA)) : 
+                                                                       DELTA_QP;
+    CHROMA_QP_OFFSET:          nxt_state = cqp_done_intr===1'b1 ? (cbf_luma===1'b1 ? RES_CODING_LUMA : JUDGE_RES_CHROMA) : CHROMA_QP_OFFSET;
+    RES_CODING_LUMA:           nxt_state = res_done_intr===1'b1 ? JUDGE_RES_CHROMA : RES_CODING_LUMA;
+    JUDGE_RES_CHROMA:          nxt_state = (log2TrafoSize > 2)===1'b1 ? (cbf_cb===1'b1 ? RES_CODING_CB : (cbf_cr===1'b1 ? RES_CODING_CR : ENDING_TU)) :
+                                                                 (blkIdx===2'h3 ? (parent_cbf_cb===1'b1 ? RES_CODING_PARENT_CB : (parent_cbf_cr===1'b1 ? RES_CODING_PARENT_CR : ENDING_TU)) :
                                                                  ENDING_TU);
-    RES_CODING_CB:             nxt_state = res_done_intr ? (cbf_cr ? RES_CODING_CR : ENDING_TU) : RES_CODING_CB;
-    RES_CODING_CR:             nxt_state = res_done_intr ? ENDING_TU : RES_CODING_CR;
-    RES_CODING_PARENT_CB:      nxt_state = res_done_intr ? (parent_cbf_cr ? RES_CODING_PARENT_CR : ENDING_TU) : RES_CODING_PARENT_CB;
-    RES_CODING_PARENT_CR:      nxt_state = res_done_intr ? ENDING_TU : RES_CODING_PARENT_CR;
+    RES_CODING_CB:             nxt_state = res_done_intr===1'b1 ? (cbf_cr===1'b1 ? RES_CODING_CR : ENDING_TU) : RES_CODING_CB;
+    RES_CODING_CR:             nxt_state = res_done_intr===1'b1 ? ENDING_TU : RES_CODING_CR;
+    RES_CODING_PARENT_CB:      nxt_state = res_done_intr===1'b1 ? (parent_cbf_cr===1'b1 ? RES_CODING_PARENT_CR : ENDING_TU) : RES_CODING_PARENT_CB;
+    RES_CODING_PARENT_CR:      nxt_state = res_done_intr===1'b1 ? ENDING_TU : RES_CODING_PARENT_CR;
     ENDING_TU:                 nxt_state = IDLE_TU;
     default:                   nxt_state = IDLE_TU;
     endcase
@@ -140,7 +142,6 @@ qdec_res_fsm res_fsm(
     .rst_n,
 
     .res_start,
-    .log2TrafoSize_res,
     .slice_type,
     .cabac_init_flag,
 

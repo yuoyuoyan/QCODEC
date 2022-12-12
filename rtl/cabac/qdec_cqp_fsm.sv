@@ -31,16 +31,16 @@ logic [7:0] ruiBin_delay;
 logic [2:0] ctx_cqp_addr_vld_count;
 logic [1:0] dec_phase; // count 4 clock cycles for normal-mode decoding
 logic [2:0] target_bin;
-logic       cu_chroma_qp_offset_enabled_flag;
+logic       cu_chroma_qpoffset_flag;
 logic [2:0] cu_chroma_qp_offset_idx;
 
 t_state_cqp state, nxt_state;
 
 always_comb
     case(state)
-    IDLE_CQP:                  nxt_state = cqp_start ? (cu_qp_delta_enabled_flag ? CU_QP_DELTA_ABS : ENDING_CQP) : IDLE_CQP;
-    CU_CHROMA_QP_OFFSET_FLAG:  nxt_state = dec_done ? (cu_qp_delta_abs > 0 ? CU_QP_DELTA_SIGN_FLAG : ENDING_CQP) : CU_QP_DELTA_ABS;
-    CU_CHROMA_QP_OFFSET_IDX:   nxt_state = dec_done ? ENDING_CQP : CU_QP_DELTA_SIGN_FLAG;
+    IDLE_CQP:                  nxt_state = cqp_start===1'b1 ? (cu_chroma_qp_offset_enabled_flag===1'b1 ? CU_CHROMA_QP_OFFSET_FLAG : ENDING_CQP) : IDLE_CQP;
+    CU_CHROMA_QP_OFFSET_FLAG:  nxt_state = dec_done===1'b1 ? ((cu_chroma_qpoffset_flag && chroma_qp_offset_list_len > 0)===1'b1 ? CU_CHROMA_QP_OFFSET_IDX : ENDING_CQP) : CU_CHROMA_QP_OFFSET_FLAG;
+    CU_CHROMA_QP_OFFSET_IDX:   nxt_state = dec_done===1'b1 ? ENDING_CQP : CU_CHROMA_QP_OFFSET_IDX;
     ENDING_CQP:                nxt_state = IDLE_CQP;
     default:                   nxt_state = IDLE_CQP;
     endcase
@@ -57,7 +57,7 @@ always_ff @(posedge clk) counter_coded_bin <= (state == IDLE_CU || dec_done) ? 0
 always_ff @(posedge clk) ruiBin_delay <= ruiBin_vld ? {ruiBin_delay[6:0], ruiBin} : ruiBin_delay; // store the decoded bins
 
 always_ff @(posedge clk) 
-    if(state == CU_CHROMA_QP_OFFSET_FLAG && dec_done) cu_chroma_qp_offset_enabled_flag <= ruiBin_delay[0];
+    if(state == CU_CHROMA_QP_OFFSET_FLAG && dec_done) cu_chroma_qpoffset_flag <= ruiBin_delay[0];
 always_ff @(posedge clk)
     if(state == IDLE_CQP) cu_chroma_qp_offset_idx <= 0;
     else if(state == CU_CHROMA_QP_OFFSET_IDX && ruiBin_vld && ruiBin) cu_chroma_qp_offset_idx <= cu_chroma_qp_offset_idx + 1;
@@ -101,7 +101,7 @@ always_ff @(posedge clk)
 always_ff @(posedge clk)
     dec_run_cqp <= ctx_cqp_addr_vld;
 
-always_ff @(posedge clk) EPMode_cu <= 0;
+always_ff @(posedge clk) EPMode_cqp <= 0;
 
 // Sub FSMs
 

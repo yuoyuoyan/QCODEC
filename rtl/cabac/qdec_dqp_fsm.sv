@@ -37,9 +37,9 @@ t_state_dqp state, nxt_state;
 
 always_comb
     case(state)
-    IDLE_DQP:                  nxt_state = dqp_start ? (cu_qp_delta_enabled_flag ? CU_QP_DELTA_ABS : ENDING_DQP) : IDLE_DQP;
-    CU_QP_DELTA_ABS:           nxt_state = dec_done ? (cu_qp_delta_abs > 0 ? CU_QP_DELTA_SIGN_FLAG : ENDING_DQP) : CU_QP_DELTA_ABS;
-    CU_QP_DELTA_SIGN_FLAG:     nxt_state = dec_done ? ENDING_DQP : CU_QP_DELTA_SIGN_FLAG;
+    IDLE_DQP:                  nxt_state = dqp_start===1'b1 ? (cu_qp_delta_enabled_flag===1'b1 ? CU_QP_DELTA_ABS : ENDING_DQP) : IDLE_DQP;
+    CU_QP_DELTA_ABS:           nxt_state = dec_done===1'b1 ? ((cu_qp_delta_abs > 0)===1'b1 ? CU_QP_DELTA_SIGN_FLAG : ENDING_DQP) : CU_QP_DELTA_ABS;
+    CU_QP_DELTA_SIGN_FLAG:     nxt_state = dec_done===1'b1 ? ENDING_DQP : CU_QP_DELTA_SIGN_FLAG;
     ENDING_DQP:                nxt_state = IDLE_DQP;
     default:                   nxt_state = IDLE_DQP;
     endcase
@@ -54,9 +54,6 @@ always_ff @(posedge clk) dqp_done_intr <= (state == ENDING_DQP) ? 1 : 0;
 // Main FSM control signals
 always_ff @(posedge clk) counter_coded_bin <= (state == IDLE_CU || dec_done) ? 0 : (ruiBin_vld ? counter_coded_bin + 1 : counter_coded_bin); // record the decoded bin at current state
 always_ff @(posedge clk) ruiBin_delay <= ruiBin_vld ? {ruiBin_delay[6:0], ruiBin} : ruiBin_delay; // store the decoded bins
-
-always_ff @(posedge clk) cu_skip_flag <= (state == CU_SKIP_FLAG && ruiBin_vld) ? ruiBin : cu_skip_flag;
-always_ff @(posedge clk) pred_mode_flag <= (log2CUSize == minCbLog2CUSize) ? 0 : ((state == PRED_MODE_FLAG && ruiBin_vld) ? ruiBin : pred_mode_flag);
 
 logic [7:0] first_zero_counter_ExG;
 logic       first_zero_flag_ExG;
