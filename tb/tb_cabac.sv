@@ -25,8 +25,13 @@ logic        lb_re;
 
 // clock, reset, finish and waveform dumping
 initial begin
+    $vcdplusfile("./vcdplus.vpd");
+    $vcdpluson();
+    $vcdplusmemon();
+`ifdef IVERILOG
     $dumpfile("cabac_waveform.vcd");
     $dumpvars(0, cabac);
+`endif
     clk = 1'b0;
     rst_n = 1'b1;
     
@@ -36,6 +41,7 @@ initial begin
     #1000
     rst_n = 1'b1;
     #10000
+    $vcdplusoff();
     $finish();
 end
 
