@@ -1,11 +1,7 @@
 // 
 // Author : Qi Wang
 // The sub-FSM to handle TU part decoding
-module qdec_tu_fsm 
-`ifndef IVERILOG
-import qdec_cabac_package::*;
-`endif
-(
+module qdec_tu_fsm import qdec_cabac_package::*; (
     input clk,
     input rst_n,
 
@@ -22,6 +18,14 @@ import qdec_cabac_package::*;
     input  logic [1:0] slice_type,
     input  logic       amp_enabled_flag,
     input  logic       cabac_init_flag,
+    input  logic       transform_skip_enabled_flag,
+    input  logic       sign_data_hiding_enabled_flag,
+    input  logic [2:0] Log2MaxTransformSkipSize,
+    input  logic       intraPredVertical,
+    input  logic       intraPredHorizontal,
+    input  logic       cu_qp_delta_enabled_flag,
+    input  logic       cu_chroma_qp_offset_enabled_flag,
+    input  logic [2:0] chroma_qp_offset_list_len,
 
     output logic [9:0] ctx_tu_addr,
     output logic       ctx_tu_addr_vld,
@@ -106,6 +110,7 @@ qdec_dqp_fsm dqp_fsm(
     .rst_n,
 
     .dqp_start,
+    .cu_qp_delta_enabled_flag,
     .slice_type,
     .cabac_init_flag,
 
@@ -126,6 +131,8 @@ qdec_cqp_fsm cqp_fsm(
     .cqp_start,
     .slice_type,
     .cabac_init_flag,
+    .cu_chroma_qp_offset_enabled_flag,
+    .chroma_qp_offset_list_len,
 
     .ctx_cqp_addr,
     .ctx_cqp_addr_vld,
@@ -144,6 +151,13 @@ qdec_res_fsm res_fsm(
     .res_start,
     .slice_type,
     .cabac_init_flag,
+    .transform_skip_enabled_flag,
+    .cu_transquant_bypass_flag,
+    .sign_data_hiding_enabled_flag,
+    .log2TrafoSize,
+    .Log2MaxTransformSkipSize,
+    .intraPredVertical,
+    .intraPredHorizontal,
 
     .ctx_res_addr,
     .ctx_res_addr_vld,

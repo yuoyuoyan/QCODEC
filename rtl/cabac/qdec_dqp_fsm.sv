@@ -1,11 +1,7 @@
 // 
 // Author : Qi Wang
 // The sub-FSM to handle Delta QP part decoding
-module qdec_dqp_fsm 
-`ifndef IVERILOG
-import qdec_cabac_package::*;
-`endif
-(
+module qdec_dqp_fsm  import qdec_cabac_package::*; (
     input clk,
     input rst_n,
 

@@ -1,11 +1,7 @@
 // 
 // Author : Qi Wang
 // The sub-FSM to handle residuel part decoding
-module qdec_res_fsm 
-`ifndef IVERILOG
-import qdec_cabac_package::*;
-`endif
-(
+module qdec_res_fsm import qdec_cabac_package::*; (
     input clk,
     input rst_n,
 
@@ -19,8 +15,6 @@ import qdec_cabac_package::*;
     input  logic [2:0] Log2MaxTransformSkipSize,
     input  logic       intraPredVertical,
     input  logic       intraPredHorizontal,
-    input  logic [4:0] width, // max TU to get residual is 32x32
-    input  logic [4:0] height,
 
     output logic [9:0] ctx_res_addr,
     output logic       ctx_res_addr_vld,

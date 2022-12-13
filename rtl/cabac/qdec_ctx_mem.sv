@@ -2,7 +2,6 @@
 // context memory, store all the arithemetic model probability
 module qdec_ctx_mem(
     input clk,
-    input rst_n,
 
     // ctx memory interface
     input  logic [9:0] ctx_addr,
