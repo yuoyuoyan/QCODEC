@@ -1,5 +1,5 @@
-+incdir+../../rtl/cabac/
-+incdir+../../rtl/cmn/
++incdir+../../rtl/cabac
++incdir+../../rtl/cmn
 ../../rtl/cmn/axi_pkg.sv
 ../../rtl/cabac/qdec_cabac_package.sv
 ../../rtl/cabac/qdec_cabac.sv
