@@ -1,5 +1,5 @@
 `ifndef IVERILOG
-package axi_pkg;
+package qdec_axi_pkg;
 `endif
 
 parameter	D_DWID	= 256;

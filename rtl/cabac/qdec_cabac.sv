@@ -3,7 +3,7 @@
 
 module qdec_cabac 
 `ifndef IVERILOG
-import qdec_cabac_package::*; import axi_pkg::*; 
+import qdec_cabac_package::*; import qdec_axi_pkg::*; 
 `endif
 (
     input clk,

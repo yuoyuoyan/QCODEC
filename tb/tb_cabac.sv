@@ -6,7 +6,7 @@ module tb_cabac;
 `include "reg_rw.sv"
 
 `ifndef IVERILOG
-import axi_pkg::*;
+import qdec_axi_pkg::*;
 import qdec_cabac_package::*;
 `endif
 

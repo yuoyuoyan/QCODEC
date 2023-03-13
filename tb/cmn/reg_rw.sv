@@ -2,7 +2,7 @@
 // Tasks to write a 32-bit data into a certain address
 task reg_write;
 `ifndef IVERILOG
-import axi_pkg::*;
+import qdec_axi_pkg::*;
 `endif
 input  logic         clk;
 output t_reg_req_s   reg_req;
@@ -25,7 +25,7 @@ endtask
 
 task reg_read;
 `ifndef IVERILOG
-import axi_pkg::*;
+import qdec_axi_pkg::*;
 `endif
 input  logic         clk;
 output t_reg_req_s   reg_req;
