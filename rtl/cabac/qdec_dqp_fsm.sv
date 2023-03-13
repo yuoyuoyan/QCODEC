@@ -48,7 +48,7 @@ always_ff @(posedge clk)
 always_ff @(posedge clk) dqp_done_intr <= (state == ENDING_DQP) ? 1 : 0;
 
 // Main FSM control signals
-always_ff @(posedge clk) counter_coded_bin <= (state == IDLE_CU || dec_done) ? 0 : (ruiBin_vld ? counter_coded_bin + 1 : counter_coded_bin); // record the decoded bin at current state
+always_ff @(posedge clk) counter_coded_bin <= (state == IDLE_DQP || dec_done) ? 0 : (ruiBin_vld ? counter_coded_bin + 1 : counter_coded_bin); // record the decoded bin at current state
 always_ff @(posedge clk) ruiBin_delay <= ruiBin_vld ? {ruiBin_delay[6:0], ruiBin} : ruiBin_delay; // store the decoded bins
 
 logic [7:0] first_zero_counter_ExG;

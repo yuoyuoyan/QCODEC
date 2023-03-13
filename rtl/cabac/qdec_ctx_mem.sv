@@ -6,7 +6,7 @@ module qdec_ctx_mem(
     // ctx memory interface
     input  logic [9:0] ctx_addr,
     input  logic [7:0] ctx_wdata,
-    input  logic [7:0] ctx_rdata,
+    output logic [7:0] ctx_rdata,
     input  logic       ctx_we,
     input  logic       ctx_re
 );

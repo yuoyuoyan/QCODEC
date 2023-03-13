@@ -142,11 +142,11 @@ always_ff @(posedge clk) mvd_sign_flag1 <= (state == MVD_SIGN_FLAG1 && ruiBin_vl
 logic [7:0] ctx_mvd_addr_vld_count;
 logic [1:0] dec_phase; // count 4 clock cycles for normal-mode decoding
 always_ff @(posedge clk)
-    if(state == IDLE_CU) ctx_mvd_addr_vld_count <= 0;
+    if(state == IDLE_MVD) ctx_mvd_addr_vld_count <= 0;
     else if(dec_done) ctx_mvd_addr_vld_count <= 0;
     else if(ctx_mvd_addr_vld) ctx_mvd_addr_vld_count <= ctx_mvd_addr_vld_count + 1;
 always_ff @(posedge clk)
-    if(state == IDLE_CU) dec_phase <= 0;
+    if(state == IDLE_MVD) dec_phase <= 0;
     else if(ctx_mvd_addr_vld) dec_phase <= 1;
     else dec_phase <= (dec_phase == 0) ? 0 : dec_phase + 1;
 

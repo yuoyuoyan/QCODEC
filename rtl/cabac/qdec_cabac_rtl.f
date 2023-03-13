@@ -1,6 +1,5 @@
 +incdir+../../rtl/cabac
 +incdir+../../rtl/cmn
-../../rtl/cmn/qdec_axi_pkg.sv
 ../../rtl/cabac/qdec_cabac_package.sv
 ../../rtl/cabac/qdec_cabac.sv
 ../../rtl/cabac/qdec_cabac_register.sv

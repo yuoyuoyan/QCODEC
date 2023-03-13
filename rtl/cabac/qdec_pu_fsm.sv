@@ -114,11 +114,11 @@ assign mvd_start = state_mvd_coding_start;
 logic [2:0] ctx_pu_addr_vld_count;
 logic [1:0] dec_phase; // count 4 clock cycles for normal-mode decoding
 always_ff @(posedge clk)
-    if(state == IDLE_CU) ctx_pu_addr_vld_count <= 0;
+    if(state == IDLE_PU) ctx_pu_addr_vld_count <= 0;
     else if(dec_done) ctx_pu_addr_vld_count <= 0;
     else if(ctx_pu_addr_vld) ctx_pu_addr_vld_count <= ctx_pu_addr_vld_count + 1;
 always_ff @(posedge clk)
-    if(state == IDLE_CU) dec_phase <= 0;
+    if(state == IDLE_PU) dec_phase <= 0;
     else if(ctx_pu_addr_vld) dec_phase <= 1;
     else dec_phase <= (dec_phase == 0) ? 0 : dec_phase + 1;
 

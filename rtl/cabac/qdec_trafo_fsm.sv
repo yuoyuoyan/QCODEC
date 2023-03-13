@@ -20,6 +20,7 @@ import qdec_cabac_package::*;
     input  logic       intra_split_flag,
     input  logic [1:0] slice_type,
     input  logic       cabac_init_flag,
+    input  logic       cu_transquant_bypass_flag,
 
     output logic [9:0] ctx_trafo_addr,
     output logic       ctx_trafo_addr_vld,
@@ -304,6 +305,14 @@ qdec_tu_fsm tu_fsm(
     .tu_start,
     .slice_type,
     .cabac_init_flag,
+    .log2TrafoSize,
+    .trafoDepth,
+    .cbf_luma      (curr_cbf_luma),
+    .cbf_cb        (curr_cbf_cb),
+    .cbf_cr        (curr_cbf_cr),
+    .parent_cbf_cb (parent_cbf_cb),
+    .parent_cbf_cr (parent_cbf_cr),
+    .cu_transquant_bypass_flag,
 
     .ctx_tu_addr,
     .ctx_tu_addr_vld,
@@ -316,16 +325,6 @@ qdec_tu_fsm tu_fsm(
 );
 
 /*
-module qdec_tu_fsm import qdec_cabac_package::*; (
-    input clk,
-    input rst_n,
-
-    input  logic       tu_start,
-    input  logic [2:0] log2TrafoSize,
-    input  logic [2:0] trafoDepth,
-    input  logic       cbf_luma,
-    input  logic       cbf_cb,
-    input  logic       cbf_cr,
     input  logic       parent_cbf_cb,
     input  logic       parent_cbf_cr,
     input  logic       cu_transquant_bypass_flag,
@@ -339,15 +338,6 @@ module qdec_tu_fsm import qdec_cabac_package::*; (
     input  logic       cu_qp_delta_enabled_flag,
     input  logic       cu_chroma_qp_offset_enabled_flag,
     input  logic [2:0] chroma_qp_offset_list_len,
-
-    output logic [9:0] ctx_tu_addr,
-    output logic       ctx_tu_addr_vld,
-    output logic       dec_run_tu,
-    input  logic       dec_rdy,
-    output logic       EPMode_tu,
-    input  logic       ruiBin,
-    input  logic       ruiBin_vld,
-    output logic       tu_done_intr
 );
 */
 

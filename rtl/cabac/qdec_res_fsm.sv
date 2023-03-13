@@ -127,7 +127,7 @@ always_ff @(posedge clk)
 always_ff @(posedge clk) res_done_intr <= (state == ENDING_RES) ? 1 : 0;
 
 // Main FSM control signals
-always_ff @(posedge clk) counter_coded_bin <= (state == IDLE_CU || dec_done) ? 0 : (ruiBin_vld ? counter_coded_bin + 1 : counter_coded_bin); // record the decoded bin at current state
+always_ff @(posedge clk) counter_coded_bin <= (state == IDLE_RES || dec_done) ? 0 : (ruiBin_vld ? counter_coded_bin + 1 : counter_coded_bin); // record the decoded bin at current state
 always_ff @(posedge clk) ruiBin_delay <= ruiBin_vld ? {ruiBin_delay[30:0], ruiBin} : ruiBin_delay; // store the decoded bins
 
 always_ff @(posedge clk) transform_skip_flag <= (state == TRANSFORM_SKIP_FLAG && dec_done) ? ruiBin_delay[0] : transform_skip_flag;
