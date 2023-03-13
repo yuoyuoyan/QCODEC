@@ -2,9 +2,6 @@
 
 module tb_cabac;
 
-`include "mem_load.sv"
-`include "reg_rw.sv"
-
 `ifndef IVERILOG
 import qdec_axi_pkg::*;
 import qdec_cabac_package::*;
@@ -16,18 +13,24 @@ t_reg_resp_s     reg_resp;
 logic [7:0]  bitstreamFetch;
 logic        bitstreamFetch_vld;
 logic        bitstreamFetch_rdy;
-logic       error_intr;
-logic       done_intr;
-logic       ctu_done_intr;
+logic [7:0]  din;
+logic        din_vld;
+logic        error_intr;
+logic        done_intr;
+logic        ctu_done_intr;
 logic [11:0] lb_raddr;
 logic [7:0]  lb_dout;
 logic        lb_re;
+logic        data_init_done, frame_started;
+
+`include "mem_load.sv"
+`include "reg_rw.sv"
 
 // clock, reset, finish and waveform dumping
 initial begin
-    $vcdplusfile("./vcdplus.vpd");
-    $vcdpluson();
-    $vcdplusmemon();
+    // $vcdplusfile("./vcdplus.vpd");
+    // $vcdpluson();
+    // $vcdplusmemon();
 `ifdef IVERILOG
     $dumpfile("cabac_waveform.vcd");
     $dumpvars(0, cabac);
@@ -40,8 +43,9 @@ initial begin
     rst_n = 1'b0;
     #1000
     rst_n = 1'b1;
-    #10000
-    $vcdplusoff();
+    // $vcdplusoff();
+    @(posedge frame_started);
+    #100000
     $finish();
 end
 
@@ -80,6 +84,7 @@ logic [31:0]   rdata;
 initial begin
     @(posedge rst_n);
     @(posedge clk);
+    @(posedge frame_started);
     vps_id = 0;
     widthByPix = 831;
     heightByPix = 479;
@@ -106,22 +111,22 @@ initial begin
     slice_sao_luma_flag = 1;
     slice_sao_chroma_flag = 1;
     slice_type = 2;
-    reg_write(clk, reg_req, reg_resp, ADDR_CABAC_VPS_0, {28'h0, vps_id});
-    reg_write(clk, reg_req, reg_resp, ADDR_CABAC_SPS_0, {4'h0, widthByPix, heightByPix, sps_id});
-    reg_write(clk, reg_req, reg_resp, ADDR_CABAC_SPS_1, {5'h0, PcmEnabledFlag, SaoEnabledFlag, ampEnabledFlag, 
-                                                         MaxTrafoDepthIntra, MaxTrafoDepthInter, log2DiffMaxMinTbSize, 
-                                                         log2MinTbSize, log2DiffMaxMinLumaCbSize, log2MinCbSize});
-    reg_write(clk, reg_req, reg_resp, ADDR_CABAC_PPS_0, {8'h0, initQp, numRefL0, numRefL1, cuQpDeltaEnabledFlag, 
-                                                         transformSkipEnabledFlag, cabacInitPresentFlag, signDataHidingFlag, pps_id});
-    reg_write(clk, reg_req, reg_resp, ADDR_CABAC_SLICE_HEADER_0, {16'h0, slice_qp_delta, 1'b0, max_num_merge_cand, slice_sao_luma_flag, 
-                                                                  slice_sao_chroma_flag, slice_type});
-    reg_read(clk, reg_req, reg_resp, ADDR_CABAC_VPS_0, rdata);
-    reg_read(clk, reg_req, reg_resp, ADDR_CABAC_SPS_0, rdata);
-    reg_read(clk, reg_req, reg_resp, ADDR_CABAC_SPS_1, rdata);
-    reg_read(clk, reg_req, reg_resp, ADDR_CABAC_PPS_0, rdata);
-    reg_read(clk, reg_req, reg_resp, ADDR_CABAC_SLICE_HEADER_0, rdata);
+    reg_write(ADDR_CABAC_VPS_0, {28'h0, vps_id});
+    reg_write(ADDR_CABAC_SPS_0, {4'h0, widthByPix, heightByPix, sps_id});
+    reg_write(ADDR_CABAC_SPS_1, {5'h0, PcmEnabledFlag, SaoEnabledFlag, ampEnabledFlag, 
+                                                    MaxTrafoDepthIntra, MaxTrafoDepthInter, log2DiffMaxMinTbSize, 
+                                                    log2MinTbSize, log2DiffMaxMinLumaCbSize, log2MinCbSize});
+    reg_write(ADDR_CABAC_PPS_0, {8'h0, initQp, numRefL0, numRefL1, cuQpDeltaEnabledFlag, 
+                                                    transformSkipEnabledFlag, cabacInitPresentFlag, signDataHidingFlag, pps_id});
+    reg_write(ADDR_CABAC_SLICE_HEADER_0, {16'h0, slice_qp_delta, 1'b0, max_num_merge_cand, slice_sao_luma_flag, 
+                                                             slice_sao_chroma_flag, slice_type});
+    reg_read(ADDR_CABAC_VPS_0, rdata);
+    reg_read(ADDR_CABAC_SPS_0, rdata);
+    reg_read(ADDR_CABAC_SPS_1, rdata);
+    reg_read(ADDR_CABAC_PPS_0, rdata);
+    reg_read(ADDR_CABAC_SLICE_HEADER_0, rdata);
     // write hw start to cabac
-    reg_write(clk, reg_req, reg_resp, ADDR_CABAC_START, 32'h1);
+    reg_write(ADDR_CABAC_START, 32'h1);
     $display("CABAC started\n");
 end
 
@@ -129,7 +134,7 @@ end
 initial begin
     @(posedge rst_n);
     @(posedge clk);
-    mem_load(clk);
+    mem_load(din, din_vld);
 end
 
 basic_fifo #(
@@ -141,8 +146,8 @@ basic_fifo #(
     .clk,
     .rst_n,
 
-    .din     (),
-    .din_vld (),
+    .din     (din),
+    .din_vld (din_vld),
     .din_rdy (),
 
     .dout     (bitstreamFetch),

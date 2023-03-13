@@ -510,14 +510,12 @@ parameter  logic [11:0] LB_START_ADDR_CQP   = 12'd1744;
 parameter  logic [11:0] LB_START_ADDR_RES   = 12'd1760;
 
 // control register from parameter sets
-typedef enum logic [31:0] {
-    ADDR_CABAC_START                          = 32'h000,
-    ADDR_CABAC_VPS_0                          = 32'h004,
-    ADDR_CABAC_SPS_0                          = 32'h008,
-    ADDR_CABAC_SPS_1                          = 32'h00c,
-    ADDR_CABAC_PPS_0                          = 32'h010,
-    ADDR_CABAC_SLICE_HEADER_0                 = 32'h014
-} t_CUTREE_ADDR_e;
+parameter logic [31:0] ADDR_CABAC_START                          = 32'h000;
+parameter logic [31:0] ADDR_CABAC_VPS_0                          = 32'h004;
+parameter logic [31:0] ADDR_CABAC_SPS_0                          = 32'h008;
+parameter logic [31:0] ADDR_CABAC_SPS_1                          = 32'h00c;
+parameter logic [31:0] ADDR_CABAC_PPS_0                          = 32'h010;
+parameter logic [31:0] ADDR_CABAC_SLICE_HEADER_0                 = 32'h014;
 
 parameter [31:0] reg_CABAC_START_MASK                           = 32'h00000001;
 parameter [31:0] reg_CABAC_VPS_0_MASK                           = 32'h0000000f;
