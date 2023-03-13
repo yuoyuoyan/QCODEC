@@ -10,7 +10,7 @@ import qdec_cabac_package::*; import qdec_axi_pkg::*;
     input rst_n,
 
     // control register interface
-    input  t_reg_req_s      reg_req, 
+    input  t_reg_req_s      reg_req,
     output t_reg_resp_s     reg_resp,
 
     // bitstream fetching interface to RAM from outside
@@ -31,6 +31,11 @@ import qdec_cabac_package::*; import qdec_axi_pkg::*;
 
 logic        cabac_start;
 t_CABAC_AO_s  reg_allout;
+// decapsule flow and all param set decoding
+t_reg_req_s      reg_req_merge, reg_req_main;
+logic [7:0]  bitstreamFetch_decap;
+logic        bitstreamFetch_decap_vld;
+logic        bitstreamFetch_decap_rdy;
 // decoded Bins from arith_dec to debin
 logic        ruiBin;
 logic        ruiBin_vld;
@@ -64,11 +69,38 @@ qdec_cabac_register cabac_reg(
     .cabac_start,
     .reg_allout,
 
-    .reg_req,
+    .reg_req (reg_req_merge),
     .reg_resp
 );
 
-// core fsm to control cabac decoder
+// AXIs merging
+axi_merge axi_merge(
+    .clk,
+    .rst_n,
+
+    .reg_req_out(reg_req_merge),
+    .reg_req_in1(reg_req),
+    .reg_req_in2(reg_req_main)
+);
+
+// core fsm to decap and read all params
+qdec_main_fsm main_fsm(
+    .clk,
+    .rst_n,
+
+    // interface to control reg
+    .reg_req (reg_req_main),
+
+    // decapsule flow
+    .bitstreamFetch,
+    .bitstreamFetch_vld,
+    .bitstreamFetch_rdy,
+    .bitstreamFetch_decap,
+    .bitstreamFetch_decap_vld,
+    .bitstreamFetch_decap_rdy,
+);
+
+// ctx fsm to control arithmatic decoder
 qdec_ctx_fsm ctx_fsm(
     .clk,
     .rst_n,
@@ -151,9 +183,9 @@ qdec_Arith_decoder Arith_decoder(
     .dec_rdy, // indicate the ping-pong buffer have byte to decode
 
     // bitstream fetch interface
-    .bitstreamFetch,
-    .bitstreamFetch_vld,
-    .bitstreamFetch_rdy,
+    .bitstreamFetch     (bitstreamFetch_decap    ),
+    .bitstreamFetch_vld (bitstreamFetch_decap_vld),
+    .bitstreamFetch_rdy (bitstreamFetch_decap_rdy),
 
     // decoded bin to de-binarization
     .ruiBin,

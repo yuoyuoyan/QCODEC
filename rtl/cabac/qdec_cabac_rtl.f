@@ -4,6 +4,16 @@
 ../../rtl/cabac/qdec_cabac.sv
 ../../rtl/cabac/qdec_cabac_register.sv
 ../../rtl/cabac/qdec_Arith_decoder.sv
+../../rtl/cabac/qdec_vps_fsm.sv
+../../rtl/cabac/qdec_sps_fsm.sv
+../../rtl/cabac/qdec_pps_fsm.sv
+../../rtl/cabac/qdec_sei_fsm.sv
+../../rtl/cabac/qdec_eos_fsm.sv
+../../rtl/cabac/qdec_eob_fsm.sv
+../../rtl/cabac/qdec_aud_fsm.sv
+../../rtl/cabac/qdec_fd_fsm.sv
+../../rtl/cabac/qdec_slice_fsm.sv
+../../rtl/cabac/qdec_main_fsm.sv
 ../../rtl/cabac/qdec_cqp_fsm.sv
 ../../rtl/cabac/qdec_cqt_fsm.sv
 ../../rtl/cabac/qdec_ctx_fsm.sv

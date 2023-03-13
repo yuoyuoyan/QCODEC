@@ -78,7 +78,7 @@ logic [5:0] qp;
 logic [11:0]widthByPix; // real value minus 1
 logic [10:0]heightByPix; // one CTU is 64x64
 
-t_state_main state, nxt_state;
+t_state_ctx state, nxt_state;
 
 assign slice_sao_luma_flag = reg_allout.reg_CABAC_SLICE_HEADER_0.slice_sao_luma_flag;
 assign slice_sao_chroma_flag = reg_allout.reg_CABAC_SLICE_HEADER_0.slice_sao_chroma_flag;
@@ -90,103 +90,103 @@ assign heightByPix = reg_allout.reg_CABAC_SPS_0.heightByPix;
 
 always_comb
     case(state)
-    IDLE_MAIN:                nxt_state = cabac_start===1'b1 ? CTX_INIT_MAIN : IDLE_MAIN;
-    CTX_INIT_MAIN:            nxt_state = ctx_init_done===1'b1 ? CALC_COR_MAIN : CTX_INIT_MAIN;
-    CALC_COR_MAIN:            nxt_state = (slice_sao_luma_flag | slice_sao_chroma_flag)===1'b1 ? SAO_MAIN : CQT_MAIN;
-    SAO_MAIN:                 nxt_state = sao_done===1'b1 ? CQT_MAIN : SAO_MAIN;
-    CQT_MAIN:                 nxt_state = cqt_done===1'b1 ? EOS_FLAG_MAIN : CQT_MAIN;
-    EOS_FLAG_MAIN:            nxt_state = dec_done===1'b1 ? ADDR_INC_MAIN : EOS_FLAG_MAIN;
-    ADDR_INC_MAIN:            nxt_state = end_of_slice_segment_flag===1'b1 ? RBSP_STOP_ONE_BIT_MAIN : CALC_COR_MAIN;
-    RBSP_STOP_ONE_BIT_MAIN:   nxt_state = dec_done===1'b1 ? (dec_result_correct===1'b1 ? RBSP_ALIGNMENT_ZERO_BITS : ERROR_MAIN) : RBSP_STOP_ONE_BIT_MAIN;
-    RBSP_ALIGNMENT_ZERO_BITS: nxt_state = dec_done===1'b1 ? (dec_result_correct===1'b1 ? ENDING_MAIN : ERROR_MAIN) : RBSP_ALIGNMENT_ZERO_BITS;
-    ERROR_MAIN:               nxt_state = ERROR_MAIN;
-    ENDING_MAIN:              nxt_state = IDLE_MAIN;
-    default:                  nxt_state = IDLE_MAIN;
+    IDLE_CTX:                nxt_state = cabac_start===1'b1 ? CTX_INIT_CTX : IDLE_CTX;
+    CTX_INIT_CTX:            nxt_state = ctx_init_done===1'b1 ? CALC_COR_CTX : CTX_INIT_CTX;
+    CALC_COR_CTX:            nxt_state = (slice_sao_luma_flag | slice_sao_chroma_flag)===1'b1 ? SAO_CTX : CQT_CTX;
+    SAO_CTX:                 nxt_state = sao_done===1'b1 ? CQT_CTX : SAO_CTX;
+    CQT_CTX:                 nxt_state = cqt_done===1'b1 ? EOS_FLAG_CTX : CQT_CTX;
+    EOS_FLAG_CTX:            nxt_state = dec_done===1'b1 ? ADDR_INC_CTX : EOS_FLAG_CTX;
+    ADDR_INC_CTX:            nxt_state = end_of_slice_segment_flag===1'b1 ? RBSP_STOP_ONE_BIT_CTX : CALC_COR_CTX;
+    RBSP_STOP_ONE_BIT_CTX:   nxt_state = dec_done===1'b1 ? (dec_result_correct===1'b1 ? RBSP_ALIGNMENT_ZERO_BITS : ERROR_CTX) : RBSP_STOP_ONE_BIT_CTX;
+    RBSP_ALIGNMENT_ZERO_BITS: nxt_state = dec_done===1'b1 ? (dec_result_correct===1'b1 ? ENDING_CTX : ERROR_CTX) : RBSP_ALIGNMENT_ZERO_BITS;
+    ERROR_CTX:               nxt_state = ERROR_CTX;
+    ENDING_CTX:              nxt_state = IDLE_CTX;
+    default:                  nxt_state = IDLE_CTX;
     endcase
 
 always_ff @(posedge clk)
-    if(!rst_n) state <= IDLE_MAIN;
+    if(!rst_n) state <= IDLE_CTX;
     else state <= nxt_state;
 
 // interrupt output to top-level
-always_ff @(posedge clk) error_intr <= (state == ERROR_MAIN)  ? 1 : 0;
-always_ff @(posedge clk) done_intr  <= (state == ENDING_MAIN) ? 1 : 0;
+always_ff @(posedge clk) error_intr <= (state == ERROR_CTX)  ? 1 : 0;
+always_ff @(posedge clk) done_intr  <= (state == ENDING_CTX) ? 1 : 0;
 always_ff @(posedge clk) ctu_done_intr  <= cqt_done_intr;
 
 // Main FSM control signals
 always_ff @(posedge clk)
     if(!rst_n) sao_done <= 0;
-    else if(state == SAO_MAIN & sao_done_intr) sao_done <= 1;
-    else if(state == CQT_MAIN) sao_done <= 0;
+    else if(state == SAO_CTX & sao_done_intr) sao_done <= 1;
+    else if(state == CQT_CTX) sao_done <= 0;
 
 always_ff @(posedge clk)
     if(!rst_n) cqt_done <= 0;
-    else if(state == CQT_MAIN & cqt_done_intr) cqt_done <= 1;
-    else if(state == EOS_FLAG_MAIN) cqt_done <= 0;
+    else if(state == CQT_CTX & cqt_done_intr) cqt_done <= 1;
+    else if(state == EOS_FLAG_CTX) cqt_done <= 0;
 
 always_ff @(posedge clk)
-    if(state == EOS_FLAG_MAIN) dec_done <= ruiBin_vld;
-    else if(state == RBSP_STOP_ONE_BIT_MAIN) dec_done <= ruiBin_vld;
+    if(state == EOS_FLAG_CTX) dec_done <= ruiBin_vld;
+    else if(state == RBSP_STOP_ONE_BIT_CTX) dec_done <= ruiBin_vld;
     else if(state == RBSP_ALIGNMENT_ZERO_BITS) dec_done <= ruiBin_vld & ruiBin_bytealign;
     else dec_done <= 0;
 
 always_ff @(posedge clk)
-    if(state == RBSP_STOP_ONE_BIT_MAIN) dec_result_correct <= ruiBin_vld ? ruiBin : dec_result_correct; // flag 1 is correct
+    if(state == RBSP_STOP_ONE_BIT_CTX) dec_result_correct <= ruiBin_vld ? ruiBin : dec_result_correct; // flag 1 is correct
     else if(state == RBSP_ALIGNMENT_ZERO_BITS) dec_result_correct <= ruiBin_vld & ruiBin ? 0 : dec_result_correct; // keeps 0 is correct
     else dec_result_correct <= 1;
 
 always_ff @(posedge clk)
     if(!rst_n) end_of_slice_segment_flag <= 0;
-    else if(state == EOS_FLAG_MAIN) end_of_slice_segment_flag <= ruiBin_vld ? ruiBin : end_of_slice_segment_flag;
+    else if(state == EOS_FLAG_CTX) end_of_slice_segment_flag <= ruiBin_vld ? ruiBin : end_of_slice_segment_flag;
 
 logic state_init_d;
-always_ff @(posedge clk) state_init_d <= (state == CTX_INIT_MAIN) ? 1'b1 : 1'b0;
-always_ff @(posedge clk) ctx_init_start <= (state == CTX_INIT_MAIN && !state_init_d) ? 1'b1 : 1'b0;
+always_ff @(posedge clk) state_init_d <= (state == CTX_INIT_CTX) ? 1'b1 : 1'b0;
+always_ff @(posedge clk) ctx_init_start <= (state == CTX_INIT_CTX && !state_init_d) ? 1'b1 : 1'b0;
 
 // context memory access control
 always_ff @(posedge clk)
     case(state)
-    CTX_INIT_MAIN: ctx_addr <= ctx_init_addr;
-    SAO_MAIN:      ctx_addr <= ctx_sao_addr;
-    CQT_MAIN:      ctx_addr <= ctx_cqt_addr;
+    CTX_INIT_CTX: ctx_addr <= ctx_init_addr;
+    SAO_CTX:      ctx_addr <= ctx_sao_addr;
+    CQT_CTX:      ctx_addr <= ctx_cqt_addr;
     default:       ctx_addr <= 0;
     endcase
 
 always_ff @(posedge clk)
     case(state)
-    CTX_INIT_MAIN: ctx_wdata <= ctx_init_wdata;
-    SAO_MAIN:      ctx_wdata <= ctxStateUpdate;
-    CQT_MAIN:      ctx_wdata <= ctxStateUpdate;
+    CTX_INIT_CTX: ctx_wdata <= ctx_init_wdata;
+    SAO_CTX:      ctx_wdata <= ctxStateUpdate;
+    CQT_CTX:      ctx_wdata <= ctxStateUpdate;
     default:       ctx_wdata <= 0;
     endcase
 
 always_ff @(posedge clk)
     case(state)
-    CTX_INIT_MAIN: ctx_we <= ctx_init_we;
-    SAO_MAIN:      ctx_we <= ctxStateUpdate_vld & ctxStateUpdate_rdy;
-    CQT_MAIN:      ctx_we <= ctxStateUpdate_vld & ctxStateUpdate_rdy;
+    CTX_INIT_CTX: ctx_we <= ctx_init_we;
+    SAO_CTX:      ctx_we <= ctxStateUpdate_vld & ctxStateUpdate_rdy;
+    CQT_CTX:      ctx_we <= ctxStateUpdate_vld & ctxStateUpdate_rdy;
     default:       ctx_we <= 0;
     endcase
 
 always_ff @(posedge clk)
     case(state)
-    CTX_INIT_MAIN: ctx_re <= 0;
-    SAO_MAIN:      ctx_re <= 1;
-    CQT_MAIN:      ctx_re <= 1;
+    CTX_INIT_CTX: ctx_re <= 0;
+    SAO_CTX:      ctx_re <= 1;
+    CQT_CTX:      ctx_re <= 1;
     default:       ctx_re <= 0;
     endcase
 
 // Other output signal control
 always_ff @(posedge clk)
     case(state)
-    SAO_MAIN:      EPMode <= EPMode_sao;
-    CQT_MAIN:      EPMode <= EPMode_cqt;
-    EOS_FLAG_MAIN: EPMode <= 1;
+    SAO_CTX:      EPMode <= EPMode_sao;
+    CQT_CTX:      EPMode <= EPMode_cqt;
+    EOS_FLAG_CTX: EPMode <= 1;
     default:       EPMode <= 0;
     endcase
 
 always_ff @(posedge clk)
-    arithInit <= (state == CTX_INIT_MAIN) ? 1 : 0;
+    arithInit <= (state == CTX_INIT_CTX) ? 1 : 0;
 
 logic [1:0] ctx_sao_addr_vld_d;
 logic [1:0] ctx_cqt_addr_vld_d;
@@ -196,15 +196,15 @@ always_ff @(posedge clk)
     if(!rst_n) ctxState_vld <= 0;
     else
         case(state)
-        SAO_MAIN: ctxState_vld <= ctx_sao_addr_vld_d[1];
-        CQT_MAIN: ctxState_vld <= ctx_cqt_addr_vld_d[1];
+        SAO_CTX: ctxState_vld <= ctx_sao_addr_vld_d[1];
+        CQT_CTX: ctxState_vld <= ctx_cqt_addr_vld_d[1];
         default:  ctxState_vld <= 0;
         endcase
 
 always_ff @(posedge clk)
     case(state)
-    SAO_MAIN: {ctxState, mps} <= (ctx_sao_addr_vld_d[1]) ? ctx_rdata : {ctxState, mps};
-    CQT_MAIN: {ctxState, mps} <= (ctx_cqt_addr_vld_d[1]) ? ctx_rdata : {ctxState, mps};
+    SAO_CTX: {ctxState, mps} <= (ctx_sao_addr_vld_d[1]) ? ctx_rdata : {ctxState, mps};
+    CQT_CTX: {ctxState, mps} <= (ctx_cqt_addr_vld_d[1]) ? ctx_rdata : {ctxState, mps};
     default:  {ctxState, mps} <= 0;
     endcase
 
@@ -214,26 +214,26 @@ always_ff @(posedge clk)
     if(!rst_n) dec_run <= 0;
     else
         case(state)
-        SAO_MAIN:      dec_run <= dec_run_sao;
-        CQT_MAIN:      dec_run <= dec_run_cqt;
-        EOS_FLAG_MAIN: dec_run <= 1;
+        SAO_CTX:      dec_run <= dec_run_sao;
+        CQT_CTX:      dec_run <= dec_run_cqt;
+        EOS_FLAG_CTX: dec_run <= 1;
         default:       dec_run <= 0;
         endcase
 
-always_ff @(posedge clk) sao_start <= (state == SAO_MAIN) ? 1 : 0;
-always_ff @(posedge clk) cqt_start <= (state == CQT_MAIN) ? 1 : 0;
+always_ff @(posedge clk) sao_start <= (state == SAO_CTX) ? 1 : 0;
+always_ff @(posedge clk) cqt_start <= (state == CQT_CTX) ? 1 : 0;
 
 always_ff @(posedge clk)
     case(state)
-    IDLE_MAIN:     xCTB <= 6'h0;
-    ADDR_INC_MAIN: xCTB <= (xCTB == widthByPix[11:6]) ? 0 : xCTB + 6'h1;
+    IDLE_CTX:     xCTB <= 6'h0;
+    ADDR_INC_CTX: xCTB <= (xCTB == widthByPix[11:6]) ? 0 : xCTB + 6'h1;
     default:       xCTB <= xCTB;
     endcase
 
 always_ff @(posedge clk)
     case(state)
-    IDLE_MAIN:     yCTB <= 5'h0;
-    ADDR_INC_MAIN: yCTB <= (xCTB == widthByPix[11:6]) ? yCTB + 5'h1 : yCTB;
+    IDLE_CTX:     yCTB <= 5'h0;
+    ADDR_INC_CTX: yCTB <= (xCTB == widthByPix[11:6]) ? yCTB + 5'h1 : yCTB;
     default:       yCTB <= yCTB;
     endcase
 

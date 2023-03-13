@@ -19,15 +19,16 @@ module mem_load
 integer fp, temp;
 // logic [8*256-1:0]str;
 logic [27:0]     bitstream_addr;
-logic [8*16-1:0] bitstream_buf;
-logic [15:0]     bitstream_buf_top;
-logic [2:0]      state;
+logic [16*8-1:0] bitstream_buf;
+logic [7:0]      bitstream_buf_top;
+logic [3:0]      state;
 localparam HEAD0 = 0;
 localparam HEAD1 = 1;
 localparam HEAD2 = 2;
 localparam FRAME_START = 3;
-localparam FRAME_JUDGE = 4;
-localparam FRAME_END = 5;
+localparam FRAME_JUDGE0 = 4;
+localparam FRAME_JUDGE1 = 5;
+localparam FRAME_END = 6;
 
 initial begin
     // fp = $fopen("../../database/bitstream.txt", "r");
@@ -38,34 +39,30 @@ initial begin
     data_init_done = 0;
     frame_started = 0;
     do begin
-        // temp = $fscanf(fp, "%x: %x %x %x %x %x %x %x %x  %s", bitstream_addr, 
-        //                 bitstream_buf[8*16-1:7*16], bitstream_buf[7*16-1:6*16], bitstream_buf[6*16-1:5*16], bitstream_buf[5*16-1:4*16],
-        //                 bitstream_buf[4*16-1:3*16], bitstream_buf[3*16-1:2*16], bitstream_buf[2*16-1:1*16], bitstream_buf[1*16-1:0*16], str);
         temp = $fread(bitstream_buf, fp);
         // $display("read data %032x\n", bitstream_buf);
-        repeat(8) begin
+        repeat(16) begin
             @(posedge clk);
-            bitstream_buf_top = bitstream_buf[8*16-1:7*16];
+            bitstream_buf_top = bitstream_buf[16*8-1:15*8];
             case(state)
-            HEAD0: state = (bitstream_buf_top == 16'h0000) ? HEAD1 : HEAD0;
-            HEAD1: state = (bitstream_buf_top == 16'h0001) ? HEAD2 : HEAD0;
-            HEAD2: state = (bitstream_buf_top == 16'h4e01) ? FRAME_START : HEAD0;
-            FRAME_START: state = (bitstream_buf_top == 16'h0000) ? FRAME_JUDGE : FRAME_START;
-            FRAME_JUDGE: state = (bitstream_buf_top == 16'h0001) ? FRAME_END : FRAME_START;
+            HEAD0: state = (bitstream_buf_top == 8'h00) ? HEAD1 : HEAD0;
+            HEAD1: state = (bitstream_buf_top == 8'h00) ? HEAD2 : HEAD0;
+            HEAD2: state = (bitstream_buf_top == 8'h01) ? FRAME_START : ((bitstream_buf_top == 8'h00) ? HEAD2 : HEAD0);
+            FRAME_START: state = (bitstream_buf_top == 8'h00) ? FRAME_JUDGE0 : FRAME_START;
+            FRAME_JUDGE0: state = (bitstream_buf_top == 8'h00) ? FRAME_JUDGE1 : FRAME_START;
+            FRAME_JUDGE1: state = (bitstream_buf_top == 8'h01) ? FRAME_END : ((bitstream_buf_top == 8'h00) ? FRAME_JUDGE1 : FRAME_START);
             FRAME_END: state = FRAME_END;
             default: state = HEAD0;
             endcase
+            dout_vld = 1;
+            dout = bitstream_buf_top;
+            @(posedge clk);
+            dout_vld = 0;
             // $display("bitstream buf top %04x, state %01x", bitstream_buf_top, state);
-            if(state == FRAME_START || state == FRAME_JUDGE) begin
+            if(state == FRAME_START || state == FRAME_JUDGE0 || state == FRAME_JUDGE1) begin
                 frame_started = 1;
-                dout_vld = 1;
-                dout = bitstream_buf_top[15:8];
-                @(posedge clk);
-                dout = bitstream_buf_top[7:0];
-                @(posedge clk);
-                dout_vld = 0;
             end
-            bitstream_buf = {bitstream_buf[7*16-1:0], 16'h0};
+            bitstream_buf = {bitstream_buf[15*8-1:0], 8'h0};
         end
     end while(state != FRAME_END);
     

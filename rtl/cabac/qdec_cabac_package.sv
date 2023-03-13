@@ -4,9 +4,12 @@ package qdec_cabac_package;
 `endif
 
 // FSM state definition
-typedef enum logic [7:0]  {IDLE_MAIN, CALC_COR_MAIN, CTX_INIT_MAIN, SAO_MAIN, 
-                           CQT_MAIN, EOS_FLAG_MAIN, ADDR_INC_MAIN, RBSP_STOP_ONE_BIT_MAIN, 
-                           RBSP_ALIGNMENT_ZERO_BITS, ERROR_MAIN, ENDING_MAIN} t_state_main;
+typedef enum logic [7:0]  {IDLE_MAIN, CAPS1_MAIN, CAPS2_MAIN, CAPS3_MAIN, NALU_HEAD1_MAIN, NALU_HEAD2_MAIN,
+                           VPS_MAIN, SPS_MAIN, PPS_MAIN, SEI_MAIN, AUD_MAIN, EOS_MAIN, EOB_MAIN, FD_MAIN, SLICE_MAIN, ENDING_MAIN} t_state_main;
+typedef enum logic [7:0]  {IDLE_DEL, DEL0, DEL1, DEL2} t_state_del03;
+typedef enum logic [7:0]  {IDLE_CTX, CALC_COR_CTX, CTX_INIT_CTX, SAO_CTX, 
+                           CQT_CTX, EOS_FLAG_CTX, ADDR_INC_CTX, RBSP_STOP_ONE_BIT_CTX, 
+                           RBSP_ALIGNMENT_ZERO_BITS, ERROR_CTX, ENDING_CTX} t_state_ctx;
 typedef enum logic [7:0]  {IDLE_INIT, SCAN_INIT, ENDING_INIT} t_state_init;
 typedef enum logic [7:0]  {IDLE_SAO, CALC_COR_SAO, SAO_MERGE_LEFT_FLAG, SAO_MERGE_UP_FLAG, 
                            SAO_TYPE_IDX_LUMA, SAO_LUMA_OFFSET_ABS_4, SAO_LUMA_OFFSET_SIGN_4, SAO_LUMA_BAND_POS, SAO_EO_CLASS_LUMA, 
@@ -70,6 +73,33 @@ parameter  CHROMA_FORMAT_444_SEPARATE_COLOR = 4;
 parameter PU_INTER_PRED_IDC_L0 = 0;
 parameter PU_INTER_PRED_IDC_L1 = 1;
 parameter PU_INTER_PRED_IDC_BI = 2;
+
+// NALU header type
+parameter NALU_TRAIL_N = 0;
+parameter NALU_TRAIL_R = 1;
+parameter NALU_TSA_N = 2;
+parameter NALU_TSA_R = 3;
+parameter NALU_STSA_N = 4;
+parameter NALU_STSA_R = 5;
+parameter NALU_RADL_N = 6;
+parameter NALU_RADL_R = 7;
+parameter NALU_RASL_N = 8;
+parameter NALU_RASL_R = 9;
+parameter NALU_BLA_W_LP = 16;
+parameter NALU_BLA_W_RADL = 17;
+parameter NALU_BLA_N_LP = 18;
+parameter NALU_IDR_W_RADL = 19;
+parameter NALU_IDR_N_LP = 20;
+parameter NALU_CRA_NUT = 21;
+parameter NALU_VPS_NUT = 32;
+parameter NALU_SPS_NUT = 33;
+parameter NALU_PPS_NUT = 34;
+parameter NALU_AUD_NUT = 35;
+parameter NALU_EOS_NUT = 36;
+parameter NALU_EOB_NUT = 37;
+parameter NALU_FD_NUT = 38;
+parameter NALU_PREFIX_SEI_NUT = 39;
+parameter NALU_SUFFIX_SEI_NUT = 40;
 
 `ifdef IVERILOG
 // sig coeff flag ctx id map
