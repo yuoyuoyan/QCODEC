@@ -23,14 +23,13 @@ logic [7:0]  lb_dout;
 logic        lb_re;
 logic        data_init_done, frame_started;
 
-`include "mem_load.sv"
 `include "reg_rw.sv"
 
 // clock, reset, finish and waveform dumping
 initial begin
-    // $vcdplusfile("./vcdplus.vpd");
-    // $vcdpluson();
-    // $vcdplusmemon();
+    $vcdplusfile("./vcdplus.vpd");
+    $vcdpluson();
+    $vcdplusmemon();
 `ifdef IVERILOG
     $dumpfile("cabac_waveform.vcd");
     $dumpvars(0, cabac);
@@ -131,11 +130,20 @@ initial begin
 end
 
 // bitstream loading
-initial begin
-    @(posedge rst_n);
-    @(posedge clk);
-    mem_load(din, din_vld);
-end
+// initial begin
+//     @(posedge rst_n);
+//     @(posedge clk);
+//     mem_load(din, din_vld);
+// end
+mem_load mem_load(
+    .clk,
+    .rst_n,
+
+    .dout    (din),
+    .dout_vld(din_vld),
+    .data_init_done,
+    .frame_started
+);
 
 basic_fifo #(
     .DATA_WIDTH(8),

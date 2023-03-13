@@ -306,7 +306,6 @@ qdec_tu_fsm tu_fsm(
     .slice_type,
     .cabac_init_flag,
     .log2TrafoSize,
-    .trafoDepth,
     .cbf_luma      (curr_cbf_luma),
     .cbf_cb        (curr_cbf_cb),
     .cbf_cr        (curr_cbf_cr),
